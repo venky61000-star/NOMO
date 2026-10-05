@@ -1,1 +1,7109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOMO IND — Free Fire Tournaments</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
+
+<style>
+:root{
+    --bg-color:#FAFAFC;
+    --card-bg:#FFFFFF;
+    --text-main:#0A0A0C;
+    --text-muted:#55555D;
+    --accent:#D4AF37;
+    --border-color:#EAEAEF;
+    --cardboard-bg:#F4F4F7;
+    --cardboard-border:#DCDCE2;
+    --cardboard-hover:#EBEBF0;
+    --cardboard-deep:#ECECEF;
+    --shadow-hover:0 20px 40px -10px rgba(0,0,0,.06);
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    scroll-behavior:smooth;
+}
+
+body{
+    font-family:'Plus Jakarta Sans',sans-serif;
+    background:var(--bg-color);
+    color:var(--text-main);
+    line-height:1.7;
+    overflow-x:hidden;
+}
+
+header{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    background:rgba(250,250,252,.9);
+    backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--border-color);
+    z-index:1000;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:1.2rem 6%;
+}
+
+.logo{
+    font-size:1.25rem;
+    font-weight:700;
+    letter-spacing:2px;
+    color:var(--text-main);
+    text-transform:uppercase;
+    margin-top:4px;
+}
+
+.logo span{
+    color:var(--accent);
+    font-weight:400;
+}
+
+.header-right{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    margin-top:6px;
+}
+
+.corner-slogan-badge{
+    background:var(--cardboard-bg);
+    border:1px solid var(--cardboard-border);
+    padding:.5rem 1rem;
+    border-radius:6px;
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--text-muted);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,.03);
+}
+
+.corner-slogan-badge span{
+    color:var(--accent);
+    font-family:'Cinzel',serif;
+    font-size:.8rem;
+}
+
+.corner-slogan-badge:hover{
+    background:var(--cardboard-hover);
+}
+
+.dropdown-menu{
+    position:absolute;
+    top:54px;
+    right:0;
+    width:240px;
+    background:var(--card-bg);
+    border:1px solid var(--border-color);
+    border-radius:8px;
+    box-shadow:var(--shadow-hover);
+    padding:.5rem;
+    display:flex;
+    flex-direction:column;
+    gap:.3rem;
+    opacity:0;
+    transform:translateY(-10px);
+    pointer-events:none;
+    transition:.25s;
+    z-index:1200;
+}
+
+.dropdown-menu.active{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+}
+
+.dropdown-balance{
+    background:var(--cardboard-bg);
+    border:1px solid var(--cardboard-border);
+    padding:.7rem 1rem;
+    border-radius:6px;
+    font-size:.75rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--text-muted);
+}
+
+.dropdown-balance span{
+    display:block;
+    color:var(--accent);
+    font-size:.95rem;
+    margin-top:2px;
+}
+
+.dropdown-item,
+.btn-back,
+.cardboard-btn{
+    background:transparent;
+    border:none;
+    color:var(--text-main);
+    cursor:pointer;
+    text-transform:uppercase;
+}
+
+.dropdown-item{
+    padding:.7rem 1rem;
+    border-radius:4px;
+    font-size:.8rem;
+    font-weight:600;
+    letter-spacing:1px;
+    text-align:left;
+    width:100%;
+}
+
+.dropdown-item:hover{
+    background:var(--cardboard-bg);
+}
+
+.btn-start{
+    background:var(--text-main);
+    color:#fff;
+    padding:.85rem 2.2rem;
+    border-radius:4px;
+    font-weight:600;
+    font-size:.85rem;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    border:none;
+    cursor:pointer;
+}
+
+.btn-start:hover{
+    background:var(--accent);
+}
+
+.page-container{
+    position:relative;
+    width:100%;
+    min-height:100vh;
+}
+
+.page{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    min-height:100vh;
+    background:var(--bg-color);
+    transition:transform .8s cubic-bezier(.645,.045,.355,1),opacity .8s;
+    pointer-events:none;
+    opacity:0;
+    transform:translateX(100%);
+}
+
+.page.page-active{
+    opacity:1;
+    transform:translateX(0);
+    pointer-events:auto;
+    position:relative;
+}
+
+#home-page{
+    transform:translateX(0);
+    opacity:1;
+    pointer-events:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:14rem 6% 8rem;
+}
+
+.hero-badge{
+    background:#fff;
+    border:1px solid var(--border-color);
+    padding:.4rem 1.2rem;
+    border-radius:30px;
+    font-size:.75rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    margin-bottom:2rem;
+    color:var(--text-muted);
+}
+
+#home-page h1{
+    font-size:clamp(2.5rem,5vw,4.2rem);
+    font-weight:700;
+    line-height:1.15;
+    margin-bottom:1.5rem;
+}
+
+#home-page h1 span{
+    color:var(--accent);
+    display:block;
+    font-family:'Cinzel',serif;
+    font-size:.65em;
+    margin-top:.6rem;
+}
+
+#home-page p{
+    font-size:1.1rem;
+    color:var(--text-muted);
+    max-width:580px;
+    margin-bottom:3rem;
+}
+
+.cardboard-btn{
+    display:block;
+    background:var(--cardboard-bg);
+    border:1px solid var(--cardboard-border);
+    color:var(--text-main);
+    padding:.8rem 1.4rem;
+    border-radius:6px;
+    font-size:.8rem;
+    font-weight:700;
+    letter-spacing:1px;
+    text-align:center;
+    width:100%;
+}
+
+.cardboard-btn:hover{
+    background:var(--cardboard-hover);
+}
+
+.admin-override-banner{
+    background:linear-gradient(145deg,#1A1A1E,#2A2A30);
+    border:1px solid var(--accent);
+    color:#fff;
+    padding:.6rem;
+    border-radius:6px;
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    text-align:center;
+    cursor:pointer;
+    margin-bottom:1rem;
+    display:none;
+}
+
+.auth-container{
+    max-width:440px;
+    margin:auto;
+    padding:9rem 6% 6rem;
+}
+
+.cardboard-auth-card,
+.luxury-card,
+.headshot-room-card{
+    background:linear-gradient(145deg,#fff,var(--cardboard-deep));
+    border:1px solid var(--cardboard-border);
+    border-radius:12px;
+}
+
+.cardboard-auth-card{
+    padding:2.5rem 2rem;
+    box-shadow:0 12px 30px rgba(0,0,0,.05);
+}
+
+.auth-header{
+    text-align:center;
+    margin-bottom:2rem;
+}
+
+.auth-header h2{
+    font-size:1.4rem;
+    margin-bottom:.4rem;
+}
+
+.auth-header p,
+.auth-switch-text,
+.auth-msg,
+.room-member-badge,
+.seating-label,
+.profile-detail-row span{
+    font-size:.85rem;
+    color:var(--text-muted);
+}
+
+.auth-form-group{
+    display:flex;
+    flex-direction:column;
+    gap:1.2rem;
+    margin-bottom:1.5rem;
+}
+
+.auth-field-wrap label{
+    display:block;
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--text-muted);
+    margin-bottom:.4rem;
+}
+
+.auth-input,
+.player-input-field,
+.chat-input{
+    width:100%;
+    background:#fff;
+    border:1px solid var(--cardboard-border);
+    padding:.8rem 1rem;
+    border-radius:6px;
+    font-family:inherit;
+    font-size:.88rem;
+    color:var(--text-main);
+    outline:none;
+}
+
+.auth-input:focus,
+.player-input-field:focus,
+.chat-input:focus{
+    border-color:var(--accent);
+}
+
+.auth-switch-text{
+    text-align:center;
+    margin-top:1.5rem;
+}
+
+.auth-switch-text a{
+    color:var(--accent);
+    font-weight:700;
+    cursor:pointer;
+}
+
+.auth-msg{
+    margin-top:1rem;
+    text-align:center;
+    font-weight:600;
+}
+
+.auth-msg.error{
+    color:#d9534f;
+}
+
+.auth-msg.success{
+    color:#5cb85c;
+}
+
+.back-nav{
+    padding:8rem 6% 0;
+    margin-bottom:-2rem;
+}
+
+.btn-back{
+    border:1px solid var(--border-color);
+    padding:.5rem 1.2rem;
+    border-radius:4px;
+    font-size:.8rem;
+    font-weight:600;
+    letter-spacing:1px;
+}
+
+.btn-back:hover{
+    background:var(--text-main);
+    color:#fff;
+}
+
+.features{
+    padding:8rem 6% 6rem;
+    max-width:1200px;
+    margin:auto;
+}
+
+.features.sub-page{
+    padding-top:4rem;
+}
+
+.section-title{
+    text-align:center;
+    margin-bottom:3.5rem;
+}
+
+.section-title h2{
+    font-size:2rem;
+}
+
+.section-title p{
+    color:var(--text-muted);
+    margin-top:.5rem;
+    font-size:.95rem;
+}
+
+.card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:2rem;
+}
+
+.luxury-card,
+.headshot-room-card{
+    padding:2.2rem 1.8rem;
+    box-shadow:0 8px 24px rgba(0,0,0,.04);
+    position:relative;
+}
+
+.luxury-card{
+    min-height:260px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
+
+.card-tag{
+    display:inline-block;
+    font-size:.7rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:var(--accent);
+    margin-bottom:1rem;
+}
+
+.room-top-meta,
+.match-pricing{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.room-top-meta{
+    margin-bottom:.8rem;
+}
+
+.room-member-badge{
+    background:var(--cardboard-bg);
+    border:1px solid var(--cardboard-border);
+    padding:.3rem .7rem;
+    border-radius:20px;
+    font-size:.7rem;
+    font-weight:700;
+}
+
+.match-pricing{
+    background:rgba(255,255,255,.6);
+    border:1px solid var(--cardboard-border);
+    padding:.6rem .9rem;
+    border-radius:6px;
+    font-size:.75rem;
+    font-weight:700;
+    text-transform:uppercase;
+    margin:1rem 0;
+}
+
+.match-pricing span{
+    color:var(--text-main);
+}
+
+.match-pricing .win-amount{
+    color:var(--accent);
+}
+
+.seating-section{
+    margin-top:1rem;
+    padding-top:1rem;
+    border-top:1px dashed var(--cardboard-border);
+}
+
+.seating-label{
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    text-align:center;
+    margin-bottom:10px;
+}
+
+.seats-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    justify-content:center;
+    max-height:180px;
+    overflow-y:auto;
+}
+
+.seat-box{
+    width:38px;
+    height:38px;
+    background:#fff;
+    border:2px solid var(--cardboard-border);
+    border-radius:6px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+}
+
+.seat-box:hover:not(.filled){
+    border-color:var(--accent);
+}
+
+.seat-box.filled{
+    background:#F0F5F1;
+    border-color:#A3C9A8;
+}
+
+.seat-box span{
+    font-size:7px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+}
+
+.seat-box b{
+    font-size:10px;
+}
+
+.seat-box.filled b{
+    color:#2D6A4F;
+    font-size:8px;
+    max-width:32px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.tear-overlay{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:20;
+    pointer-events:none;
+    display:none;
+}
+
+.tear-overlay.active{
+    display:block;
+}
+
+.tear-half{
+    position:absolute;
+    top:0;
+    width:50%;
+    height:100%;
+    background:#E8E8ED;
+    transition:.6s;
+}
+
+.tear-half.left{
+    left:0;
+}
+
+.tear-half.right{
+    right:0;
+}
+
+.tear-watermark{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-family:'Cinzel',serif;
+    font-size:1rem;
+    white-space:nowrap;
+}
+
+.headshot-room-card.tearing .tear-half.left{
+    transform:translateX(-100%) rotate(-8deg);
+    opacity:0;
+}
+
+.headshot-room-card.tearing .tear-half.right{
+    transform:translateX(100%) rotate(8deg);
+    opacity:0;
+}
+
+.notification-modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(10,10,12,.4);
+    backdrop-filter:blur(4px);
+    z-index:2000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition:.25s;
+}
+
+.notification-modal-overlay.active{
+    opacity:1;
+    pointer-events:auto;
+}
+
+.notification-card{
+    background:linear-gradient(145deg,#fff,var(--cardboard-deep));
+    border:1px solid var(--cardboard-border);
+    border-radius:12px;
+    width:90%;
+    max-width:420px;
+    padding:2rem 1.6rem;
+    text-align:center;
+    box-shadow:0 20px 40px rgba(0,0,0,.1);
+    max-height:90vh;
+    overflow-y:auto;
+}
+
+.notification-card h3{
+    margin-bottom:.4rem;
+}
+
+.notification-card p{
+    font-size:.85rem;
+    color:var(--text-muted);
+    margin-bottom:1.2rem;
+}
+
+.player-inputs-group{
+    margin-bottom:1.5rem;
+    text-align:left;
+}
+
+.player-input-wrap{
+    margin-bottom:.8rem;
+}
+
+.player-input-wrap label{
+    display:block;
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:.3rem;
+}
+
+.notification-actions{
+    display:flex;
+    gap:10px;
+}
+
+.notification-actions button{
+    flex:1;
+}
+
+.btn-cancel-modal{
+    background:#EAEAEF;
+    border:1px solid var(--cardboard-border);
+    color:var(--text-muted);
+    padding:.75rem 1rem;
+    border-radius:6px;
+    font-size:.78rem;
+    font-weight:700;
+    text-transform:uppercase;
+    cursor:pointer;
+}
+
+.withdraw-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:1.2rem;
+}
+
+.withdraw-tab-btn{
+    flex:1;
+    background:var(--cardboard-bg);
+    border:1px solid var(--cardboard-border);
+    padding:.5rem;
+    border-radius:6px;
+    font-size:.72rem;
+    font-weight:700;
+    cursor:pointer;
+    text-transform:uppercase;
+}
+
+.withdraw-tab-btn.active{
+    background:var(--text-main);
+    color:#fff;
+    border-color:var(--text-main);
+}
+
+.withdraw-form-section{
+    display:none;
+    text-align:left;
+}
+
+.withdraw-form-section.active{
+    display:block;
+}
+
+.room-lobby-container{
+    max-width:800px;
+    margin:auto;
+    padding:8rem 6% 6rem;
+    display:flex;
+    flex-direction:column;
+    gap:2rem;
+}
+
+.cardboard-room-info-card{
+    background:linear-gradient(145deg,#fff,var(--cardboard-deep));
+    border:1px solid var(--cardboard-border);
+    border-radius:12px;
+    padding:2rem;
+    text-align:center;
+}
+
+.credentials-box{
+    background:#fff;
+    border:1px dashed var(--cardboard-border);
+    border-radius:8px;
+    padding:1.5rem;
+    margin-top:1rem;
+}
+
+.credentials-box h4{
+    font-size:.85rem;
+    text-transform:uppercase;
+    color:var(--accent);
+}
+
+.creds-display{
+    font-size:1rem;
+    font-weight:700;
+}
+
+.lobby-cardboard-roster{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:12px;
+}
+
+.white-cardboard-box{
+    background:#fff;
+    border:1px solid var(--cardboard-border);
+    border-top:4px solid var(--accent);
+    border-radius:8px;
+    padding:.9rem 1rem;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    gap:8px;
+}
+
+.white-cardboard-box span{
+    display:block;
+    font-size:.68rem;
+    font-weight:700;
+    text-transform:uppercase;
+    color:var(--text-muted);
+}
+
+.white-cardboard-box b{
+    display:block;
+    font-size:.88rem;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.admin-wallet-btn{
+    background:var(--accent);
+    color:#0A0A0C;
+    border:none;
+    padding:.3rem .6rem;
+    border-radius:4px;
+    font-size:.65rem;
+    font-weight:700;
+    text-transform:uppercase;
+    cursor:pointer;
+}
+
+.admin-wallet-btn:hover{
+    opacity:.9;
+}
+
+/* Admin Broadcast */
+.admin-chat-container{
+    background:#fff;
+    border:1px solid var(--border-color);
+    border-radius:12px;
+    display:flex;
+    flex-direction:column;
+    height:380px;
+    overflow:hidden;
+}
+
+.chat-header{
+    background:var(--cardboard-bg);
+    border-bottom:1px solid var(--cardboard-border);
+    padding:1rem 1.5rem;
+    display:flex;
+    justify-content:space-between;
+}
+
+.chat-header h4{
+    font-size:.9rem;
+    text-transform:uppercase;
+}
+
+.admin-badge-indicator{
+    color:#A68724;
+    font-size:.7rem;
+    font-weight:700;
+}
+
+.chat-messages-area{
+    flex:1;
+    padding:1.2rem;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:.8rem;
+}
+
+.chat-msg{
+    max-width:80%;
+    padding:.8rem 1rem;
+    border-radius:8px;
+    font-size:.88rem;
+}
+
+.chat-msg.admin{
+    background:linear-gradient(145deg,#fff,var(--cardboard-deep));
+    border:1px solid var(--cardboard-border);
+    align-self:flex-start;
+}
+
+.chat-msg.user-sent{
+    background:#F0F5F1;
+    border:1px solid #A3C9A8;
+    align-self:flex-end;
+}
+
+.chat-msg-sender{
+    font-size:.72rem;
+    font-weight:700;
+    color:var(--accent);
+    margin-bottom:.2rem;
+}
+
+.chat-footer{
+    border-top:1px solid var(--border-color);
+    padding:.8rem 1.2rem;
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.chat-input{
+    flex:1;
+    border:none;
+    outline:none;
+    font-size:.9rem;
+    background:transparent;
+}
+
+.btn-send-chat{
+    background:var(--text-main);
+    color:#fff;
+    border:none;
+    padding:.6rem 1.2rem;
+    border-radius:6px;
+    font-size:.8rem;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.chat-restricted-notice{
+    font-size:.7rem;
+    color:var(--text-muted);
+    text-align:center;
+    padding:.4rem;
+    background:var(--cardboard-bg);
+    border-top:1px solid var(--border-color);
+}
+
+.profile-card{
+    max-width:390px;
+}
+
+.profile-avatar{
+    width:72px;
+    height:72px;
+    margin:0 auto 1rem;
+    border-radius:50%;
+    background:var(--text-main);
+    color:var(--accent);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Cinzel',serif;
+    font-size:1.6rem;
+    font-weight:700;
+    border:2px solid var(--accent);
+}
+
+.profile-details{
+    background:#fff;
+    border:1px solid var(--cardboard-border);
+    border-radius:8px;
+    overflow:hidden;
+    text-align:left;
+}
+
+.profile-detail-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:.9rem 1rem;
+    border-bottom:1px solid var(--border-color);
+}
+
+.profile-detail-row:last-child{
+    border-bottom:none;
+}
+
+.profile-detail-row span{
+    letter-spacing:1px;
+}
+
+.profile-detail-row b{
+    font-size:.82rem;
+    color:var(--text-main);
+}
+
+.nomo-footer{
+    background:var(--cardboard-deep);
+    border-top:1px solid var(--border-color);
+    padding:3rem 6%;
+    text-align:center;
+    margin-top:4rem;
+}
+
+.nomo-footer .footer-logo{
+    font-size:1.1rem;
+    font-weight:700;
+    letter-spacing:2px;
+    color:var(--text-main);
+    text-transform:uppercase;
+    margin-bottom:1rem;
+}
+
+.nomo-footer .footer-logo span{
+    color:var(--accent);
+    font-weight:400;
+}
+
+.footer-slogans{
+    display:flex;
+    flex-direction:column;
+    gap:.4rem;
+    font-size:.85rem;
+    color:var(--text-muted);
+    font-weight:600;
+    letter-spacing:.5px;
+}
+
+.footer-slogans span:nth-child(2){
+    color:var(--accent);
+    font-family:'Cinzel',serif;
+    font-size:.95rem;
+}
+
+/* GLOBAL LIVE CHAT */
+.support-chat-float-btn{
+    position:fixed;
+    bottom:25px;
+    right:25px;
+    background:var(--text-main);
+    color:var(--accent);
+    border:2px solid var(--accent);
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.4rem;
+    cursor:pointer;
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+    z-index:2500;
+    transition:.3s;
+}
+
+.support-chat-float-btn:hover{
+    transform:scale(1.08);
+    background:var(--accent);
+    color:#0A0A0C;
+}
+
+.support-chat-window{
+    position:fixed;
+    bottom:95px;
+    right:25px;
+    width:350px;
+    max-width:90vw;
+    background:var(--card-bg);
+    border:1px solid var(--cardboard-border);
+    border-radius:12px;
+    box-shadow:var(--shadow-hover);
+    display:flex;
+    flex-direction:column;
+    height:450px;
+    z-index:2500;
+    opacity:0;
+    transform:translateY(20px);
+    pointer-events:none;
+    transition:.3s;
+}
+
+.support-chat-window.active{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+}
+
+.support-chat-header{
+    background:var(--cardboard-bg);
+    border-bottom:1px solid var(--cardboard-border);
+    padding:1rem;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-top-left-radius:12px;
+    border-top-right-radius:12px;
+}
+
+.support-chat-header h4{
+    font-size:.85rem;
+    text-transform:uppercase;
+}
+
+.live-status{
+    font-size:.65rem;
+    color:#2D6A4F;
+    font-weight:700;
+    margin-left:6px;
+}
+
+.support-chat-close{
+    background:transparent;
+    border:none;
+    font-size:1.1rem;
+    cursor:pointer;
+    color:var(--text-muted);
+}
+
+.support-chat-body{
+    flex:1;
+    padding:1rem;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:.8rem;
+}
+
+.support-msg{
+    max-width:85%;
+    padding:.7rem .9rem;
+    border-radius:8px;
+    font-size:.82rem;
+    word-break:break-word;
+}
+
+.support-msg.agent{
+    background:var(--cardboard-bg);
+    border:1px solid var(--cardboard-border);
+    align-self:flex-start;
+}
+
+.support-msg.customer{
+    background:#F0F5F1;
+    border:1px solid #A3C9A8;
+    align-self:flex-end;
+}
+
+.support-msg.admin{
+    background:linear-gradient(145deg,#fff4cc,#f7e7a9);
+    border:1px solid var(--accent);
+    align-self:flex-start;
+}
+
+.message-time{
+    display:block;
+    font-size:.58rem;
+    color:var(--text-muted);
+    margin-top:4px;
+}
+
+.support-chat-footer{
+    border-top:1px solid var(--border-color);
+    padding:.8rem;
+    display:flex;
+    gap:8px;
+}
+
+.support-chat-input{
+    flex:1;
+    border:1px solid var(--cardboard-border);
+    padding:.6rem .8rem;
+    border-radius:6px;
+    font-size:.85rem;
+    outline:none;
+}
+
+.support-chat-input:focus{
+    border-color:var(--accent);
+}
+
+.support-send-btn{
+    background:var(--text-main);
+    color:#fff;
+    border:none;
+    padding:.6rem 1rem;
+    border-radius:6px;
+    font-size:.78rem;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.support-send-btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+.chat-login-note{
+    text-align:center;
+    font-size:.72rem;
+    color:var(--text-muted);
+    padding:7px;
+    background:var(--cardboard-bg);
+    border-top:1px solid var(--border-color);
+}
+
+/* Connection indicator */
+.firebase-status{
+    position:fixed;
+    bottom:95px;
+    left:20px;
+    z-index:2400;
+    font-size:.62rem;
+    font-weight:700;
+    background:#fff;
+    border:1px solid var(--cardboard-border);
+    padding:5px 9px;
+    border-radius:20px;
+    color:var(--text-muted);
+    opacity:.8;
+}
+
+.firebase-status.online{
+    color:#2D6A4F;
+}
+
+.firebase-status.offline{
+    color:#C0392B;
+}
+
+@media(max-width:600px){
+    header{
+        padding:1rem 4%;
+    }
+
+    .header-right{
+        gap:7px;
+    }
+
+    .corner-slogan-badge{
+        font-size:.65rem;
+        padding:.4rem .7rem;
+        max-width:190px;
+        overflow:hidden;
+        white-space:nowrap;
+        text-overflow:ellipsis;
+    }
+
+    .card-grid{
+        grid-template-columns:1fr;
+    }
+
+    #home-page{
+        padding:14rem 5% 8rem;
+    }
+
+    .support-chat-window{
+        right:10px;
+        bottom:85px;
+        width:calc(100vw - 20px);
+        max-width:none;
+        height:65vh;
+    }
+
+    .support-chat-float-btn{
+        right:16px;
+        bottom:18px;
+    }
+
+    .firebase-status{
+        left:10px;
+        bottom:18px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">NOMO <span>IND</span></div>
+
+    <div class="header-right">
+
+        <div class="corner-slogan-badge" id="headerAuthBtn">
+            <span>Drop In.</span> Wipe Out. Take Crown.
+        </div>
+
+        <div class="floating-menu-wrapper" style="position:relative;">
+
+            <div class="dropdown-menu" id="dropdownMenu">
+
+                <div class="dropdown-balance">
+                    Balance
+                    <span id="walletBalance">₹0</span>
+                </div>
+
+                <button class="dropdown-item" id="depositMenuBtn">Deposit</button>
+                <button class="dropdown-item" id="withdrawMenuBtn">Withdraw</button>
+                <button class="dropdown-item" id="profileMenuBtn">Profile</button>
+                <button class="dropdown-item" id="myMatchesMenuBtn">My Matches</button>
+
+                <button class="dropdown-item admin-menu-item"
+                        id="adminScheduleBrBtn"
+                        style="display:none;color:var(--accent);font-weight:700;">
+                    👑 Schedule/Slots BR
+                </button>
+
+                <button class="dropdown-item admin-menu-item"
+                        id="adminScheduleCsBtn"
+                        style="display:none;color:var(--accent);font-weight:700;">
+                    👑 Schedule/Slots CS
+                </button>
+
+                <button class="dropdown-item admin-menu-item"
+                        id="adminScheduleLwBtn"
+                        style="display:none;color:var(--accent);font-weight:700;">
+                    👑 Schedule/Slots Lonewolf
+                </button>
+
+                <button class="dropdown-item"
+                        id="adminUsersMenuBtn"
+                        style="display:none;color:var(--accent);font-weight:700;">
+                    👑 Manage Users
+                </button>
+
+                <button class="dropdown-item"
+                        id="adminRequestsMenuBtn"
+                        style="color:var(--accent);font-weight:700;line-height:1.2;padding:.8rem 1rem;">
+                    <span id="requestsMenuLabel">👑 Requests</span><br>
+                    <span style="font-size:.65rem;color:var(--text-muted);font-weight:500;"
+                          id="requestsMenuSub">
+                        Deposits & Withdrawals
+                    </span>
+                </button>
+
+                <button class="dropdown-item" onclick="toggleSupportChat()">
+                    💬 Global Live Chat
+                </button>
+
+                <button class="dropdown-item"
+                        id="logoutMenuBtn"
+                        style="color:#C0392B;">
+                    Logout
+                </button>
+
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<!-- GLOBAL LIVE CHAT -->
+
+<div class="support-chat-float-btn"
+     onclick="toggleSupportChat()"
+     title="Global Live Chat">
+    💬
+</div>
+
+<div class="support-chat-window" id="supportChatWindow">
+
+    <div class="support-chat-header">
+        <div>
+            <h4>
+                NOMO Global Chat
+                <span class="live-status">● LIVE</span>
+            </h4>
+        </div>
+
+        <button class="support-chat-close"
+                onclick="toggleSupportChat()">
+            ✕
+        </button>
+    </div>
+
+    <div class="support-chat-body"
+         id="supportChatMessages">
+    </div>
+
+    <div class="chat-login-note"
+         id="chatLoginNote">
+        Login to send messages. Everyone can see the global chat.
+    </div>
+
+    <div class="support-chat-footer">
+
+        <input type="text"
+               class="support-chat-input"
+               id="supportChatInput"
+               placeholder="Type a message..."
+               maxlength="300">
+
+        <button class="support-send-btn"
+                id="supportSendBtn"
+                onclick="sendSupportMessage()">
+            Send
+        </button>
+
+    </div>
+
+</div>
+
+<div class="firebase-status"
+     id="firebaseStatus">
+    ● Connecting...
+</div>
+
+
+<!-- ADMIN MATCH MANAGEMENT -->
+
+<div class="notification-modal-overlay" id="adminMatchModal">
+
+    <div class="notification-card" style="max-width:520px;">
+
+        <h3 id="adminMatchModalTitle">
+            Manage Matches & Player Slots
+        </h3>
+
+        <p>
+            Schedule matches, adjust pricing, and dynamically add or remove player slots.
+        </p>
+
+        <div class="player-inputs-group">
+
+            <div class="player-input-wrap">
+
+                <label>Match Title / Time Slot</label>
+
+                <input type="text"
+                       class="player-input-field"
+                       id="newMatchTitleInput"
+                       placeholder="e.g. 10:00 AM Custom Room">
+
+            </div>
+
+            <div style="display:flex;gap:10px;">
+
+                <div class="player-input-wrap" style="flex:1;">
+                    <label>Entry Fee (₹)</label>
+                    <input type="number"
+                           class="player-input-field"
+                           id="newMatchEntryInput"
+                           value="40">
+                </div>
+
+                <div class="player-input-wrap" style="flex:1;">
+                    <label>Win Prize (₹)</label>
+                    <input type="number"
+                           class="player-input-field"
+                           id="newMatchWinInput"
+                           value="700">
+                </div>
+
+                <div class="player-input-wrap" style="flex:1;">
+                    <label>Max Seats</label>
+                    <input type="number"
+                           class="player-input-field"
+                           id="newMatchMaxSeatsInput"
+                           value="20"
+                           min="2"
+                           max="50">
+                </div>
+
+            </div>
+        </div>
+
+        <button class="cardboard-btn"
+                id="addNewMatchBtn"
+                style="margin-bottom:15px;">
+            Schedule New Match
+        </button>
+
+        <hr style="border:0;border-top:1px solid var(--cardboard-border);margin:15px 0;">
+
+        <h4 style="text-align:left;font-size:.85rem;text-transform:uppercase;margin-bottom:10px;">
+            Existing Matches & Slot Management
+        </h4>
+
+        <div id="adminMatchListContainer"
+             style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;text-align:left;margin-bottom:15px;">
+        </div>
+
+        <div class="notification-actions">
+
+            <button class="btn-cancel-modal"
+                    id="closeAdminMatchModalBtn"
+                    style="width:100%;">
+                Close Panel
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- PROFILE -->
+
+<div class="notification-modal-overlay" id="profileModal">
+
+    <div class="notification-card profile-card">
+
+        <div class="profile-avatar" id="profileAvatar">
+            N
+        </div>
+
+        <h3 id="profileName">
+            NOMO Player
+        </h3>
+
+        <p id="profileUsernameDisplay"
+           style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;">
+            username
+        </p>
+
+        <div class="profile-details">
+
+            <div class="profile-detail-row">
+                <span>Username</span>
+                <b id="profileIgn">---</b>
+            </div>
+
+            <div class="profile-detail-row">
+                <span>Account</span>
+                <b id="profileStatus">Active</b>
+            </div>
+
+            <div class="profile-detail-row">
+                <span>Balance</span>
+                <b id="profileBalance">₹0</b>
+            </div>
+
+        </div>
+
+        <button class="cardboard-btn"
+                id="profileLogoutBtn"
+                style="color:#C0392B;margin-top:15px;">
+            Logout
+        </button>
+
+        <button class="btn-cancel-modal"
+                id="profileCloseBtn"
+                style="width:100%;margin-top:10px;">
+            Close
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- DEPOSIT -->
+
+<div class="notification-modal-overlay" id="depositModal">
+
+    <div class="notification-card">
+
+        <h3>Deposit Funds</h3>
+
+        <p>
+            Scan the QR code or pay directly via UPI ID below.
+            Minimum Deposit is <strong>₹50</strong>.
+        </p>
+
+        <div style="margin:15px 0;display:flex;justify-content:center;">
+
+            <img src="image.png"
+                 alt="Deposit QR Scanner"
+                 style="width:160px;height:160px;border-radius:8px;border:2px solid var(--accent);object-fit:cover;">
+
+        </div>
+
+        <div style="background:var(--cardboard-bg);border:1px solid var(--cardboard-border);border-radius:6px;padding:.6rem 1rem;margin-bottom:15px;font-size:.82rem;font-weight:700;color:var(--text-main);display:flex;justify-content:space-between;align-items:center;">
+
+            <span>
+                UPI ID:
+                <span style="color:var(--accent);">
+                    7330948514@fam
+                </span>
+            </span>
+
+            <button class="admin-wallet-btn"
+                    onclick="navigator.clipboard.writeText('7330948514@fam');alert('UPI ID copied to clipboard!');"
+                    style="padding:4px 8px;font-size:.7rem;">
+                Copy
+            </button>
+
+        </div>
+
+        <div class="player-inputs-group" style="text-align:left;">
+
+            <div class="player-input-wrap">
+
+                <label>Deposit Amount (₹) [Min: 50]</label>
+
+                <input type="number"
+                       class="player-input-field"
+                       id="depositAmountInput"
+                       placeholder="Enter amount (Min 50)..."
+                       min="50">
+
+            </div>
+
+            <div class="player-input-wrap">
+
+                <label>Transaction / UTR Reference ID</label>
+
+                <input type="text"
+                       class="player-input-field"
+                       id="depositUtrInput"
+                       placeholder="Enter UTR/UPI ref...">
+
+            </div>
+
+        </div>
+
+        <div class="notification-actions">
+
+            <button class="btn-cancel-modal"
+                    id="depositCancelBtn">
+                Cancel
+            </button>
+
+            <button class="cardboard-btn"
+                    id="depositConfirmBtn">
+                Confirm Deposit
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- WITHDRAW -->
+
+<div class="notification-modal-overlay" id="withdrawModal">
+
+    <div class="notification-card">
+
+        <h3>Withdraw Funds</h3>
+
+        <p>Choose payout method and enter your details.</p>
+
+        <div class="withdraw-tabs">
+
+            <button class="withdraw-tab-btn active"
+                    id="tabBankBtn"
+                    onclick="switchWithdrawTab('bank')">
+                Bank Account
+            </button>
+
+            <button class="withdraw-tab-btn"
+                    id="tabUpiBtn"
+                    onclick="switchWithdrawTab('upi')">
+                UPI ID
+            </button>
+
+        </div>
+
+        <div class="player-inputs-group">
+
+            <div class="player-input-wrap">
+
+                <label>Withdrawal Amount (₹)</label>
+
+                <input type="number"
+                       class="player-input-field"
+                       id="withdrawAmountInput"
+                       placeholder="Enter amount...">
+
+            </div>
+
+            <div class="withdraw-form-section active"
+                 id="bankFormSection">
+
+                <div class="player-input-wrap">
+                    <label>Account Holder Name</label>
+                    <input type="text"
+                           class="player-input-field"
+                           id="bankNameInput"
+                           placeholder="Name on account...">
+                </div>
+
+                <div class="player-input-wrap">
+                    <label>Bank Account Number</label>
+                    <input type="text"
+                           class="player-input-field"
+                           id="bankAccInput"
+                           placeholder="Enter account number...">
+                </div>
+
+                <div class="player-input-wrap">
+                    <label>IFSC Code</label>
+                    <input type="text"
+                           class="player-input-field"
+                           id="bankIfscInput"
+                           placeholder="e.g. SBIN0001234">
+                </div>
+
+            </div>
+
+            <div class="withdraw-form-section"
+                 id="upiFormSection">
+
+                <div class="player-input-wrap">
+
+                    <label>UPI ID</label>
+
+                    <input type="text"
+                           class="player-input-field"
+                           id="upiIdInput"
+                           placeholder="username@oksbi / @paytm">
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="notification-actions">
+
+            <button class="btn-cancel-modal"
+                    id="withdrawCancelBtn">
+                Cancel
+            </button>
+
+            <button class="cardboard-btn"
+                    id="withdrawConfirmBtn">
+                Submit Request
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- SEAT MODAL -->
+
+<div class="notification-modal-overlay"
+     id="notificationModal">
+
+    <div class="notification-card">
+
+        <h3 id="modalSeatTitle">
+            Seat Reservation
+        </h3>
+
+        <p id="modalSeatSubtitle">
+            Enter your username for this slot.
+        </p>
+
+        <div class="player-inputs-group">
+
+            <div class="player-input-wrap">
+
+                <label id="modalInputLabel">
+                    Username
+                </label>
+
+                <input type="text"
+                       class="player-input-field"
+                       id="seatPlayerInput"
+                       placeholder="Enter Username...">
+
+            </div>
+
+        </div>
+
+        <div class="notification-actions">
+
+            <button class="btn-cancel-modal"
+                    id="modalCancelBtn">
+                Cancel
+            </button>
+
+            <button class="cardboard-btn"
+                    id="modalConfirmBtn">
+                Confirm Seat
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="page-container">
+
+    <!-- HOME -->
+
+    <div class="page page-active"
+         id="home-page">
+
+        <div class="hero-badge">
+            Free Fire Elite Circuit
+        </div>
+
+        <h1>
+            Drop In. Wipe Out. Take the Crown.
+            <span>
+                Only Legends Survive the Zone.
+            </span>
+        </h1>
+
+        <p>
+            An elite, uncompromising platform designed for high-caliber Free Fire players who demand custom rooms, competitive matches and rewarding tournaments.
+        </p>
+
+        <button class="btn-start"
+                id="startBtn">
+            ▶ START PLAYING
+        </button>
+
+    </div>
+
+
+    <!-- LOGIN -->
+
+    <div class="page" id="login-page">
+
+        <div class="back-nav">
+            <button class="btn-back"
+                    id="backToHomeFromLoginBtn">
+                ← Back to Home
+            </button>
+        </div>
+
+        <div class="auth-container">
+
+            <div class="cardboard-auth-card">
+
+                <div class="auth-header">
+                    <h2>Secure Login</h2>
+                    <p>Enter your Username and Password</p>
+                </div>
+
+                <div class="auth-form-group">
+
+                    <div class="auth-field-wrap">
+                        <label>Username</label>
+                        <input type="text"
+                               class="auth-input"
+                               id="loginUsername"
+                               placeholder="Your Username">
+                    </div>
+
+                    <div class="auth-field-wrap">
+                        <label>Password</label>
+                        <input type="password"
+                               class="auth-input"
+                               id="loginPassword"
+                               placeholder="••••••••">
+                    </div>
+
+                </div>
+
+                <button class="cardboard-btn"
+                        id="submitLoginBtn">
+                    Login to NOMO
+                </button>
+
+                <div id="loginMsg"
+                     class="auth-msg">
+                </div>
+
+                <div class="auth-switch-text">
+                    Don't have an account?
+                    <a id="goToSignupLink">Create one</a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SIGNUP -->
+
+    <div class="page" id="signup-page">
+
+        <div class="back-nav">
+            <button class="btn-back"
+                    id="backToHomeFromSignupBtn">
+                ← Back to Home
+            </button>
+        </div>
+
+        <div class="auth-container">
+
+            <div class="cardboard-auth-card">
+
+                <div class="auth-header">
+                    <h2>Create Account</h2>
+                    <p>Create your NOMO IND player account</p>
+                </div>
+
+                <div class="auth-form-group">
+
+                    <div class="auth-field-wrap">
+
+                        <label>Username</label>
+
+                        <input type="text"
+                               class="auth-input"
+                               id="signupUsername"
+                               placeholder="Choose a Username">
+
+                    </div>
+
+                    <div class="auth-field-wrap">
+
+                        <label>Password</label>
+
+                        <input type="password"
+                               class="auth-input"
+                               id="signupPassword"
+                               placeholder="••••••••">
+
+                    </div>
+
+                </div>
+
+                <button class="cardboard-btn"
+                        id="submitSignupBtn">
+                    Sign Up Now
+                </button>
+
+                <div id="signupMsg"
+                     class="auth-msg">
+                </div>
+
+                <div class="auth-switch-text">
+                    Already have an account?
+                    <a id="goToLoginLink">Login here</a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- OPTIONS -->
+
+    <div class="page" id="options-page">
+
+        <div class="back-nav">
+            <button class="btn-back"
+                    id="backToHomeBtn">
+                ← Back to Home
+            </button>
+        </div>
+
+        <section class="features">
+
+            <div class="section-title">
+                <h2>Select Your Mode</h2>
+                <p>Choose your battlefield.</p>
+            </div>
+
+            <div class="card-grid">
+
+                <div class="luxury-card">
+
+                    <div>
+                        <span class="card-tag">Mode 01</span>
+                        <h3>Battle Royale (BR)</h3>
+                        <p>Full map custom rooms with custom slot limits.</p>
+                    </div>
+
+                    <button class="cardboard-btn"
+                            id="goToBrMapsBtn">
+                        Join BR Rooms
+                    </button>
+
+                </div>
+
+
+                <div class="luxury-card">
+
+                    <div>
+                        <span class="card-tag">Mode 02</span>
+                        <h3>Clash Squad</h3>
+                        <p>Tactical 4v4 custom-room battles.</p>
+                    </div>
+
+                    <button class="cardboard-btn"
+                            id="goToCsModesBtn">
+                        Join Clash Squad
+                    </button>
+
+                </div>
+
+
+                <div class="luxury-card">
+
+                    <div>
+                        <span class="card-tag">Mode 03</span>
+                        <h3>Lone Wolf</h3>
+                        <p>Pure 1v1 and 2v2 mechanical combat.</p>
+                    </div>
+
+                    <button class="cardboard-btn"
+                            id="goToLoneWolfModesBtn">
+                        Join Lone Wolf
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- ADMIN USERS -->
+
+    <div class="page" id="admin-users-page">
+
+        <div class="back-nav">
+
+            <button class="btn-back"
+                    id="backToOptionsFromAdminUsersBtn">
+                ← Back to Modes
+            </button>
+
+        </div>
+
+        <section class="features sub-page">
+
+            <div class="section-title">
+
+                <h2>Admin User Directory</h2>
+
+                <p>
+                    Search registered user accounts & top up wallets.
+                </p>
+
+            </div>
+
+            <div style="max-width:600px;margin:0 auto 2.5rem;">
+
+                <input type="text"
+                       class="player-input-field"
+                       id="adminUserSearchInput"
+                       placeholder="Search by username..."
+                       style="padding:1rem 1.2rem;font-size:1rem;">
+
+            </div>
+
+            <div class="card-grid"
+                 id="adminUsersListContainer"
+                 style="grid-template-columns:1fr;max-width:800px;margin:auto;">
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- REQUESTS -->
+
+    <div class="page" id="admin-requests-page">
+
+        <div class="back-nav">
+
+            <button class="btn-back"
+                    id="backToOptionsFromRequestsBtn">
+                ← Back to Modes
+            </button>
+
+        </div>
+
+        <section class="features sub-page">
+
+            <div class="section-title">
+
+                <h2 id="requestsPageTitle">
+                    Transaction Requests
+                </h2>
+
+                <p id="requestsPageSubtitle">
+                    Review player deposit proofs and payout withdrawal requests.
+                </p>
+
+            </div>
+
+            <div class="withdraw-tabs"
+                 style="max-width:400px;margin:0 auto 2.5rem;">
+
+                <button class="withdraw-tab-btn active"
+                        id="reqTabDepositBtn"
+                        onclick="switchAdminRequestTab('deposit')">
+                    Deposits
+                </button>
+
+                <button class="withdraw-tab-btn"
+                        id="reqTabWithdrawBtn"
+                        onclick="switchAdminRequestTab('withdraw')">
+                    Withdrawals
+                </button>
+
+            </div>
+
+            <div class="card-grid"
+                 id="adminRequestsListContainer"
+                 style="grid-template-columns:1fr;max-width:800px;margin:auto;">
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- BR -->
+
+    <div class="page" id="br-maps-page">
+
+        <div class="back-nav">
+
+            <button class="btn-back"
+                    id="backToOptionsBtn">
+                ← Back to Modes
+            </button>
+
+        </div>
+
+        <section class="features sub-page">
+
+            <div class="section-title">
+
+                <h2>Battle Royale Schedule</h2>
+
+                <p>Dynamic Seat Allocation</p>
+
+            </div>
+
+            <div class="card-grid"
+                 id="brCardsContainer">
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- CS -->
+
+    <div class="page" id="cs-modes-page">
+
+        <div class="back-nav">
+
+            <button class="btn-back"
+                    id="backToOptionsFromCsBtn">
+                ← Back to Modes
+            </button>
+
+        </div>
+
+        <section class="features sub-page">
+
+            <div class="section-title">
+                <h2>Clash Squad Rooms</h2>
+            </div>
+
+            <div class="card-grid"
+                 id="csModesContainer">
+
+                <div class="luxury-card">
+
+                    <div class="admin-override-banner cs-admin-direct"
+                         onclick="openAdminLobbyDirect('Body & Heads Arena')">
+                        👑 Admin Direct Enter Lobby
+                    </div>
+
+                    <div>
+
+                        <span class="card-tag">
+                            Rule Set Alpha
+                        </span>
+
+                        <h3>Body & Heads</h3>
+
+                        <p>
+                            Balanced custom matches.
+                        </p>
+
+                    </div>
+
+                    <button class="cardboard-btn"
+                            id="goToHeadShotTimesBtn">
+                        Select Body & Heads Rooms
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- LONE WOLF -->
+
+    <div class="page" id="lonewolf-modes-page">
+
+        <div class="back-nav">
+
+            <button class="btn-back"
+                    id="backToOptionsFromLoneWolfBtn">
+                ← Back to Modes
+            </button>
+
+        </div>
+
+        <section class="features sub-page">
+
+            <div class="section-title">
+
+                <h2>Lone Wolf</h2>
+
+                <p>Select your format.</p>
+
+            </div>
+
+            <div class="card-grid"
+                 id="lonewolfCardsContainer">
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- HEADSHOT -->
+
+    <div class="page" id="headshot-times-page">
+
+        <div class="back-nav">
+
+            <button class="btn-back"
+                    id="backToCsModesBtn">
+                ← Back to Styles
+            </button>
+
+        </div>
+
+        <section class="features sub-page">
+
+            <div class="section-title">
+                <h2>Body & Heads Schedule</h2>
+            </div>
+
+            <div class="card-grid"
+                 id="headshotCardsContainer">
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- MY MATCHES -->
+
+    <div class="page" id="my-matches-page">
+
+        <div class="back-nav">
+
+            <button class="btn-back"
+                    id="backToOptionsFromMatchesBtn">
+                ← Back to Modes
+            </button>
+
+        </div>
+
+        <section class="features sub-page">
+
+            <div class="section-title">
+
+                <h2>My Joined Matches</h2>
+
+                <p>
+                    Access your reserved rooms & lobbies.
+                </p>
+
+            </div>
+
+            <div class="card-grid"
+                 id="myMatchesContainer">
+
+                <div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:3rem 0;">
+                    You have not joined any rooms yet.
+                    Select a room and secure your seat!
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- ROOM LOBBY -->
+
+    <div class="page" id="room-lobby-page">
+
+        <div class="back-nav">
+
+            <button class="btn-back"
+                    id="backToTimesBtn">
+                ← Back
+            </button>
+
+        </div>
+
+        <div class="room-lobby-container">
+
+            <div class="cardboard-room-info-card">
+
+                <span class="card-tag">
+                    Confirmed Slot / Admin Access
+                </span>
+
+                <h3 id="lobbyRoomTitle">
+                    9:00 AM Body & Heads Room
+                </h3>
+
+                <p>
+                    Squad roster secured.
+                </p>
+
+                <div class="credentials-box">
+
+                    <h4>
+                        Room ID & Password
+                    </h4>
+
+                    <div class="creds-display"
+                         id="credsDisplayStatus">
+                        NOMO-BR-900: Pass #7788
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div style="text-align:center;">
+
+                <button class="cardboard-btn"
+                        style="display:inline-block;width:auto;padding:.6rem 1.5rem;"
+                        onclick="toggleRosterView()">
+                    Show Joined Slot Players
+                </button>
+
+            </div>
+
+            <div class="lobby-cardboard-roster"
+                 id="lobbyRosterContainer">
+            </div>
+
+
+            <!-- OLD ADMIN BROADCAST -->
+
+            <div class="admin-chat-container">
+
+                <div class="chat-header">
+
+                    <h4>
+                        Admin Broadcast Feed
+                    </h4>
+
+                    <span class="admin-badge-indicator"
+                          id="adminIndicatorBadge">
+                        Admin Only
+                    </span>
+
+                </div>
+
+                <div class="chat-messages-area"
+                     id="chatMessagesArea">
+
+                    <div class="chat-msg admin">
+
+                        <div class="chat-msg-sender">
+                            NOMO Arena Admin
+                        </div>
+
+                        Welcome to the room lobby!
+                        Room credentials posted above.
+
+                    </div>
+
+                </div>
+
+                <div class="chat-footer">
+
+                    <input type="text"
+                           class="chat-input"
+                           id="chatInput"
+                           placeholder="Only administrators can send messages..."
+                           disabled>
+
+                    <button class="btn-send-chat"
+                            id="sendChatBtn"
+                            disabled>
+                        Send
+                    </button>
+
+                </div>
+
+                <div class="chat-restricted-notice"
+                     id="chatRestrictedNotice">
+                    Chat broadcasting is restricted to official tournament admins.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<footer class="nomo-footer">
+
+    <div class="footer-logo">
+        NOMO <span>IND</span>
+    </div>
+
+    <div class="footer-slogans">
+
+        <span>
+            Drop In. Wipe Out. Take the Crown.
+        </span>
+
+        <span>
+            Only Legends Survive the Zone.
+        </span>
+
+        <span>
+            Train Hard. Play Elite. Claim Victory.
+        </span>
+
+    </div>
+
+</footer>
+
+
+<script>
+
+/* =========================================================
+   FIREBASE CONFIG
+   REPLACE THESE VALUES WITH YOUR FIREBASE WEB CONFIG
+   ========================================================= */
+
+const firebaseConfig = {
+
+    apiKey: "YOUR_API_KEY",
+
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+
+    databaseURL:
+        "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+
+    projectId: "YOUR_PROJECT_ID",
+
+    storageBucket:
+        "YOUR_PROJECT.firebasestorage.app",
+
+    messagingSenderId:
+        "YOUR_SENDER_ID",
+
+    appId:
+        "YOUR_APP_ID"
+
+};
+
+
+/* =========================================================
+   FIREBASE INITIALIZATION
+   ========================================================= */
+
+let firebaseReady = false;
+let db = null;
+let firebaseUser = null;
+
+const firebaseStatus =
+    document.getElementById("firebaseStatus");
+
+function setFirebaseStatus(text, state=""){
+
+    firebaseStatus.textContent = text;
+
+    firebaseStatus.classList.remove(
+        "online",
+        "offline"
+    );
+
+    if(state){
+        firebaseStatus.classList.add(state);
+    }
+}
+
+try{
+
+    firebase.initializeApp(firebaseConfig);
+
+    db = firebase.database();
+
+    firebaseReady = true;
+
+    setFirebaseStatus(
+        "● Firebase Ready",
+        "online"
+    );
+
+}catch(error){
+
+    console.error(
+        "Firebase initialization error:",
+        error
+    );
+
+    setFirebaseStatus(
+        "● Firebase Not Configured",
+        "offline"
+    );
+
+}
+
+
+/* =========================================================
+   FIREBASE ANONYMOUS AUTH
+   ========================================================= */
+
+if(firebaseReady){
+
+    firebase.auth()
+    .signInAnonymously()
+    .then(result => {
+
+        firebaseUser = result.user;
+
+        setFirebaseStatus(
+            "● LIVE CHAT ONLINE",
+            "online"
+        );
+
+        initGlobalChat();
+
+    })
+    .catch(error => {
+
+        console.error(
+            "Anonymous authentication failed:",
+            error
+        );
+
+        setFirebaseStatus(
+            "● Chat Authentication Error",
+            "offline"
+        );
+
+    });
+
+}
+
+
+/* =========================================================
+   GLOBAL APP VARIABLES
+   ========================================================= */
+
+let currentUser = null;
+let userWalletBalance = 0;
+let userJoinedMatches = [];
+let lastActiveSourcePage = null;
+let currentActiveCard = null;
+
+const USERS_KEY =
+    "nomo_secure_users_v3";
+
+const SESSION_KEY =
+    "nomo_current_session_v3";
+
+const REQUESTS_KEY =
+    "nomo_admin_requests_v3";
+
+const MATCHES_KEY =
+    "nomo_custom_matches_v3";
+
+const ADMIN_CREDENTIALS = {
+    username:"admin",
+    password:"nomoadmin2026"
+};
+
+const walletBalanceEl =
+    document.getElementById("walletBalance");
+
+const headerAuthBtn =
+    document.getElementById("headerAuthBtn");
+
+
+/* =========================================================
+   DEFAULT MATCHES
+   ========================================================= */
+
+const defaultMatches = {
+
+    br:[
+        {
+            id:"br-1",
+            title:"9:00 AM BR Room",
+            entry:40,
+            win:700,
+            max:20
+        },
+        {
+            id:"br-2",
+            title:"9:40 AM BR Room",
+            entry:40,
+            win:700,
+            max:20
+        }
+    ],
+
+    cs:[
+        {
+            id:"cs-1",
+            title:"9:00 AM Body & Heads (1v1)",
+            entry:50,
+            win:90,
+            max:2,
+            type:"1v1"
+        },
+        {
+            id:"cs-2",
+            title:"9:30 AM Body & Heads (2v2)",
+            entry:50,
+            win:90,
+            max:4,
+            type:"2v2"
+        }
+    ],
+
+    lonewolf:[
+        {
+            id:"lw-1",
+            title:"Lone Wolf 1v1 Arena",
+            entry:50,
+            win:90,
+            max:2,
+            type:"1v1"
+        },
+        {
+            id:"lw-2",
+            title:"Lone Wolf 2v2 Arena",
+            entry:50,
+            win:90,
+            max:4,
+            type:"2v2"
+        }
+    ]
+
+};
+
+
+function getStoredMatches(){
+
+    try{
+
+        const data =
+            JSON.parse(
+                localStorage.getItem(MATCHES_KEY)
+            );
+
+        return data || defaultMatches;
+
+    }catch(e){
+
+        return defaultMatches;
+
+    }
+
+}
+
+
+function saveStoredMatches(matches){
+
+    localStorage.setItem(
+        MATCHES_KEY,
+        JSON.stringify(matches)
+    );
+
+}
+
+
+function getStoredUsers(){
+
+    try{
+
+        const users =
+            JSON.parse(
+                localStorage.getItem(USERS_KEY)
+            );
+
+        return Array.isArray(users)
+            ? users
+            : [];
+
+    }catch(e){
+
+        return [];
+
+    }
+
+}
+
+
+function saveStoredUsers(users){
+
+    localStorage.setItem(
+        USERS_KEY,
+        JSON.stringify(users)
+    );
+
+}
+
+
+function getStoredRequests(){
+
+    try{
+
+        const reqs =
+            JSON.parse(
+                localStorage.getItem(REQUESTS_KEY)
+            );
+
+        return Array.isArray(reqs)
+            ? reqs
+            : [];
+
+    }catch(e){
+
+        return [];
+
+    }
+
+}
+
+
+function saveStoredRequests(reqs){
+
+    localStorage.setItem(
+        REQUESTS_KEY,
+        JSON.stringify(reqs)
+    );
+
+}
+
+
+/* =========================================================
+   SESSION
+   ========================================================= */
+
+function saveSession(){
+
+    if(!currentUser){
+
+        localStorage.removeItem(
+            SESSION_KEY
+        );
+
+        return;
+
+    }
+
+    localStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({
+            username:currentUser.username,
+            isAdmin:!!currentUser.isAdmin
+        })
+    );
+
+}
+
+
+function loadSession(){
+
+    try{
+
+        const saved =
+            JSON.parse(
+                localStorage.getItem(SESSION_KEY)
+            );
+
+        if(!saved || !saved.username){
+
+            return false;
+
+        }
+
+        if(saved.isAdmin){
+
+            currentUser = {
+                username:saved.username,
+                isAdmin:true
+            };
+
+            return true;
+
+        }
+
+        const users =
+            getStoredUsers();
+
+        const user =
+            users.find(
+                u =>
+                    u.username &&
+                    u.username.toLowerCase()
+                    ===
+                    saved.username.toLowerCase()
+            );
+
+        if(!user){
+
+            localStorage.removeItem(
+                SESSION_KEY
+            );
+
+            return false;
+
+        }
+
+        currentUser = {
+            username:user.username,
+            isAdmin:false
+        };
+
+        userWalletBalance =
+            user.wallet || 0;
+
+        return true;
+
+    }catch(e){
+
+        localStorage.removeItem(
+            SESSION_KEY
+        );
+
+        return false;
+
+    }
+
+}
+
+
+function saveWallet(){
+
+    if(!currentUser ||
+       currentUser.isAdmin){
+
+        return;
+
+    }
+
+    const users =
+        getStoredUsers();
+
+    const i =
+        users.findIndex(
+            u =>
+                u.username.toLowerCase()
+                ===
+                currentUser.username.toLowerCase()
+        );
+
+    if(i !== -1){
+
+        users[i].wallet =
+            userWalletBalance;
+
+        saveStoredUsers(users);
+
+    }
+
+}
+
+
+function updateWalletDisplay(){
+
+    walletBalanceEl.textContent =
+        `₹${userWalletBalance.toLocaleString("en-IN")}`;
+
+}
+
+
+function updateHeaderAccount(){
+
+    if(!currentUser){
+
+        headerAuthBtn.innerHTML =
+            '<span>Drop In.</span> Wipe Out. Take Crown.';
+
+    }else if(currentUser.isAdmin){
+
+        headerAuthBtn.innerHTML =
+            '<span>👑 ADMIN</span> Control Center';
+
+    }else{
+
+        headerAuthBtn.innerHTML =
+            `<span>👤 ${escapeHtml(currentUser.username)}</span> Match Hub`;
+
+    }
+
+}
+
+
+function updateAdminUI(){
+
+    const isAdmin =
+        currentUser &&
+        currentUser.isAdmin;
+
+    document
+        .querySelectorAll(".admin-override-banner")
+        .forEach(
+            b =>
+                b.style.display =
+                isAdmin
+                ? "block"
+                : "none"
+        );
+
+    document
+        .querySelectorAll(".admin-menu-item")
+        .forEach(
+            b =>
+                b.style.display =
+                isAdmin
+                ? "block"
+                : "none"
+        );
+
+    const adminUsersMenuBtn =
+        document.getElementById(
+            "adminUsersMenuBtn"
+        );
+
+    if(adminUsersMenuBtn){
+
+        adminUsersMenuBtn.style.display =
+            isAdmin
+            ? "block"
+            : "none";
+
+    }
+
+    const reqMenuLabel =
+        document.getElementById(
+            "requestsMenuLabel"
+        );
+
+    const reqMenuSub =
+        document.getElementById(
+            "requestsMenuSub"
+        );
+
+    if(isAdmin){
+
+        reqMenuLabel.textContent =
+            "👑 Requests";
+
+        reqMenuSub.textContent =
+            "Manage All Deposits & Withdrawals";
+
+    }else{
+
+        reqMenuLabel.textContent =
+            "📋 My Requests";
+
+        reqMenuSub.textContent =
+            "View Deposit & Withdrawal Status";
+
+    }
+
+    updateGlobalChatUI();
+
+}
+
+
+/* =========================================================
+   PASSWORD HASH
+   ========================================================= */
+
+async function hashPassword(password){
+
+    const buffer =
+        await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(password)
+        );
+
+    return Array
+        .from(new Uint8Array(buffer))
+        .map(
+            b =>
+                b.toString(16)
+                .padStart(2,"0")
+        )
+        .join("");
+
+}
+
+
+/* =========================================================
+   HTML ESCAPE
+   ========================================================= */
+
+function escapeHtml(value){
+
+    return String(value ?? "")
+        .replace(
+            /[&<>"']/g,
+            char => ({
+                "&":"&amp;",
+                "<":"&lt;",
+                ">":"&gt;",
+                '"':"&quot;",
+                "'":"&#039;"
+            })[char]
+        );
+
+}
+
+
+/* =========================================================
+   PAGE REFERENCES
+   ========================================================= */
+
+const dropdownMenu =
+    document.getElementById("dropdownMenu");
+
+const homePage =
+    document.getElementById("home-page");
+
+const loginPage =
+    document.getElementById("login-page");
+
+const signupPage =
+    document.getElementById("signup-page");
+
+const optionsPage =
+    document.getElementById("options-page");
+
+const adminUsersPage =
+    document.getElementById("admin-users-page");
+
+const adminRequestsPage =
+    document.getElementById("admin-requests-page");
+
+const brMapsPage =
+    document.getElementById("br-maps-page");
+
+const csModesPage =
+    document.getElementById("cs-modes-page");
+
+const lonewolfModesPage =
+    document.getElementById("lonewolf-modes-page");
+
+const headshotTimesPage =
+    document.getElementById("headshot-times-page");
+
+const myMatchesPage =
+    document.getElementById("my-matches-page");
+
+const roomLobbyPage =
+    document.getElementById("room-lobby-page");
+
+
+function switchPage(fromPage,toPage){
+
+    if(fromPage){
+
+        fromPage.classList.remove(
+            "page-active"
+        );
+
+    }
+
+    toPage.classList.add(
+        "page-active"
+    );
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+}
+
+
+/* =========================================================
+   HEADER MENU
+   ========================================================= */
+
+headerAuthBtn.addEventListener(
+    "click",
+    e => {
+
+        e.stopPropagation();
+
+        if(!currentUser){
+
+            loginMsg.textContent = "";
+
+            switchPage(
+                document.querySelector(".page.page-active"),
+                loginPage
+            );
+
+        }else{
+
+            dropdownMenu.classList.toggle(
+                "active"
+            );
+
+        }
+
+    }
+);
+
+
+window.addEventListener(
+    "click",
+    () =>
+        dropdownMenu.classList.remove(
+            "active"
+        )
+);
+
+
+/* =========================================================
+   AUTH ELEMENTS
+   ========================================================= */
+
+const loginUsername =
+    document.getElementById(
+        "loginUsername"
+    );
+
+const loginPassword =
+    document.getElementById(
+        "loginPassword"
+    );
+
+const signupUsername =
+    document.getElementById(
+        "signupUsername"
+    );
+
+const signupPassword =
+    document.getElementById(
+        "signupPassword"
+    );
+
+const submitLoginBtn =
+    document.getElementById(
+        "submitLoginBtn"
+    );
+
+const submitSignupBtn =
+    document.getElementById(
+        "submitSignupBtn"
+    );
+
+const loginMsg =
+    document.getElementById(
+        "loginMsg"
+    );
+
+const signupMsg =
+    document.getElementById(
+        "signupMsg"
+    );
+
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
+
+const profileModal =
+    document.getElementById(
+        "profileModal"
+    );
+
+const profileAvatar =
+    document.getElementById(
+        "profileAvatar"
+    );
+
+const profileName =
+    document.getElementById(
+        "profileName"
+    );
+
+const profileUsernameDisplay =
+    document.getElementById(
+        "profileUsernameDisplay"
+    );
+
+const profileIgn =
+    document.getElementById(
+        "profileIgn"
+    );
+
+const profileStatus =
+    document.getElementById(
+        "profileStatus"
+    );
+
+const profileBalance =
+    document.getElementById(
+        "profileBalance"
+    );
+
+
+/* =========================================================
+   DEPOSIT
+   ========================================================= */
+
+const depositModal =
+    document.getElementById(
+        "depositModal"
+    );
+
+const depositCancelBtn =
+    document.getElementById(
+        "depositCancelBtn"
+    );
+
+const depositConfirmBtn =
+    document.getElementById(
+        "depositConfirmBtn"
+    );
+
+const depositAmountInput =
+    document.getElementById(
+        "depositAmountInput"
+    );
+
+const depositUtrInput =
+    document.getElementById(
+        "depositUtrInput"
+    );
+
+
+document
+    .getElementById("depositMenuBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            if(!currentUser){
+
+                switchPage(
+                    document.querySelector(".page.page-active"),
+                    loginPage
+                );
+
+                return;
+
+            }
+
+            depositAmountInput.value = "";
+            depositUtrInput.value = "";
+
+            depositModal.classList.add(
+                "active"
+            );
+
+            dropdownMenu.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+depositCancelBtn.addEventListener(
+    "click",
+    () =>
+        depositModal.classList.remove(
+            "active"
+        )
+);
+
+
+depositConfirmBtn.addEventListener(
+    "click",
+    () => {
+
+        const amt =
+            parseFloat(
+                depositAmountInput.value
+            );
+
+        const utr =
+            depositUtrInput.value.trim();
+
+        if(isNaN(amt) || amt < 50){
+
+            alert(
+                "Minimum deposit amount is ₹50."
+            );
+
+            return;
+
+        }
+
+        if(!utr){
+
+            alert(
+                "Please provide the transaction reference ID or UTR."
+            );
+
+            return;
+
+        }
+
+        const reqs =
+            getStoredRequests();
+
+        reqs.unshift({
+
+            id:"DEP-" + Date.now(),
+
+            type:"deposit",
+
+            username:
+                currentUser.isAdmin
+                ? "Admin"
+                : currentUser.username,
+
+            amount:amt,
+
+            details:"UTR: " + utr,
+
+            status:"pending",
+
+            date:new Date().toLocaleString()
+
+        });
+
+        saveStoredRequests(reqs);
+
+        alert(
+            `Deposit request of ₹${amt} submitted successfully! Awaiting admin approval.`
+        );
+
+        depositModal.classList.remove(
+            "active"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   WITHDRAW
+   ========================================================= */
+
+const withdrawModal =
+    document.getElementById(
+        "withdrawModal"
+    );
+
+const withdrawCancelBtn =
+    document.getElementById(
+        "withdrawCancelBtn"
+    );
+
+const withdrawConfirmBtn =
+    document.getElementById(
+        "withdrawConfirmBtn"
+    );
+
+const withdrawAmountInput =
+    document.getElementById(
+        "withdrawAmountInput"
+    );
+
+const tabBankBtn =
+    document.getElementById(
+        "tabBankBtn"
+    );
+
+const tabUpiBtn =
+    document.getElementById(
+        "tabUpiBtn"
+    );
+
+const bankFormSection =
+    document.getElementById(
+        "bankFormSection"
+    );
+
+const upiFormSection =
+    document.getElementById(
+        "upiFormSection"
+    );
+
+const bankNameInput =
+    document.getElementById(
+        "bankNameInput"
+    );
+
+const bankAccInput =
+    document.getElementById(
+        "bankAccInput"
+    );
+
+const bankIfscInput =
+    document.getElementById(
+        "bankIfscInput"
+    );
+
+const upiIdInput =
+    document.getElementById(
+        "upiIdInput"
+    );
+
+
+function switchWithdrawTab(tab){
+
+    if(tab === "bank"){
+
+        tabBankBtn.classList.add("active");
+        tabUpiBtn.classList.remove("active");
+
+        bankFormSection.classList.add("active");
+        upiFormSection.classList.remove("active");
+
+    }else{
+
+        tabUpiBtn.classList.add("active");
+        tabBankBtn.classList.remove("active");
+
+        upiFormSection.classList.add("active");
+        bankFormSection.classList.remove("active");
+
+    }
+
+}
+
+
+document
+    .getElementById("withdrawMenuBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            if(!currentUser){
+
+                switchPage(
+                    document.querySelector(".page.page-active"),
+                    loginPage
+                );
+
+                return;
+
+            }
+
+            withdrawAmountInput.value = "";
+            bankNameInput.value = "";
+            bankAccInput.value = "";
+            bankIfscInput.value = "";
+            upiIdInput.value = "";
+
+            withdrawModal.classList.add(
+                "active"
+            );
+
+            dropdownMenu.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+withdrawCancelBtn.addEventListener(
+    "click",
+    () =>
+        withdrawModal.classList.remove(
+            "active"
+        )
+);
+
+
+withdrawConfirmBtn.addEventListener(
+    "click",
+    () => {
+
+        const amt =
+            parseFloat(
+                withdrawAmountInput.value
+            );
+
+        if(isNaN(amt) || amt <= 0){
+
+            alert(
+                "Enter a valid withdrawal amount."
+            );
+
+            return;
+
+        }
+
+        if(
+            !currentUser.isAdmin &&
+            amt > userWalletBalance
+        ){
+
+            alert(
+                "Insufficient balance for this withdrawal."
+            );
+
+            return;
+
+        }
+
+        let payoutDetails = "";
+
+        if(
+            bankFormSection.classList.contains(
+                "active"
+            )
+        ){
+
+            const name =
+                bankNameInput.value.trim();
+
+            const acc =
+                bankAccInput.value.trim();
+
+            const ifsc =
+                bankIfscInput.value.trim();
+
+            if(!name || !acc || !ifsc){
+
+                alert(
+                    "Please fill in all Bank Account details."
+                );
+
+                return;
+
+            }
+
+            payoutDetails =
+                `Bank: ${acc} (${ifsc}) - ${name}`;
+
+        }else{
+
+            const upi =
+                upiIdInput.value.trim();
+
+            if(
+                !upi ||
+                !upi.includes("@")
+            ){
+
+                alert(
+                    "Please enter a valid UPI ID."
+                );
+
+                return;
+
+            }
+
+            payoutDetails =
+                `UPI ID: ${upi}`;
+
+        }
+
+        const reqs =
+            getStoredRequests();
+
+        reqs.unshift({
+
+            id:"WDR-" + Date.now(),
+
+            type:"withdraw",
+
+            username:
+                currentUser.isAdmin
+                ? "Admin"
+                : currentUser.username,
+
+            amount:amt,
+
+            details:payoutDetails,
+
+            status:"pending",
+
+            date:new Date().toLocaleString()
+
+        });
+
+        saveStoredRequests(reqs);
+
+        if(!currentUser.isAdmin){
+
+            userWalletBalance -= amt;
+
+            updateWalletDisplay();
+
+            saveWallet();
+
+        }
+
+        alert(
+            `Withdrawal request of ₹${amt} submitted successfully!`
+        );
+
+        withdrawModal.classList.remove(
+            "active"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
+
+function openProfile(){
+
+    if(!currentUser){
+
+        switchPage(
+            document.querySelector(".page.page-active"),
+            loginPage
+        );
+
+        return;
+
+    }
+
+    const uname =
+        currentUser.isAdmin
+        ? "Administrator"
+        : currentUser.username;
+
+    profileAvatar.textContent =
+        uname.charAt(0).toUpperCase();
+
+    profileName.textContent =
+        currentUser.isAdmin
+        ? "NOMO IND Admin"
+        : currentUser.username;
+
+    profileUsernameDisplay.textContent =
+        currentUser.isAdmin
+        ? "@admin"
+        : `@${currentUser.username}`;
+
+    profileIgn.textContent =
+        currentUser.username;
+
+    profileStatus.textContent =
+        currentUser.isAdmin
+        ? "Administrator"
+        : "Active";
+
+    profileBalance.textContent =
+        currentUser.isAdmin
+        ? "Unlimited"
+        : `₹${userWalletBalance}`;
+
+    profileModal.classList.add(
+        "active"
+    );
+
+    dropdownMenu.classList.remove(
+        "active"
+    );
+
+}
+
+
+function closeProfile(){
+
+    profileModal.classList.remove(
+        "active"
+    );
+
+}
+
+
+document
+    .getElementById("profileMenuBtn")
+    .addEventListener(
+        "click",
+        openProfile
+    );
+
+
+document
+    .getElementById("profileCloseBtn")
+    .addEventListener(
+        "click",
+        closeProfile
+    );
+
+
+document
+    .getElementById("myMatchesMenuBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            if(!currentUser){
+
+                switchPage(
+                    document.querySelector(".page.page-active"),
+                    loginPage
+                );
+
+                return;
+
+            }
+
+            dropdownMenu.classList.remove(
+                "active"
+            );
+
+            renderMyMatches();
+
+            switchPage(
+                document.querySelector(".page.page-active"),
+                myMatchesPage
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   ADMIN MATCH MANAGER
+   ========================================================= */
+
+let currentManagingCategory = "br";
+
+const adminMatchModal =
+    document.getElementById(
+        "adminMatchModal"
+    );
+
+const adminMatchModalTitle =
+    document.getElementById(
+        "adminMatchModalTitle"
+    );
+
+const newMatchTitleInput =
+    document.getElementById(
+        "newMatchTitleInput"
+    );
+
+const newMatchEntryInput =
+    document.getElementById(
+        "newMatchEntryInput"
+    );
+
+const newMatchWinInput =
+    document.getElementById(
+        "newMatchWinInput"
+    );
+
+const newMatchMaxSeatsInput =
+    document.getElementById(
+        "newMatchMaxSeatsInput"
+    );
+
+const adminMatchListContainer =
+    document.getElementById(
+        "adminMatchListContainer"
+    );
+
+
+document
+    .getElementById("adminScheduleBrBtn")
+    .addEventListener(
+        "click",
+        () =>
+            openAdminMatchManager("br")
+    );
+
+
+document
+    .getElementById("adminScheduleCsBtn")
+    .addEventListener(
+        "click",
+        () =>
+            openAdminMatchManager("cs")
+    );
+
+
+document
+    .getElementById("adminScheduleLwBtn")
+    .addEventListener(
+        "click",
+        () =>
+            openAdminMatchManager("lonewolf")
+    );
+
+
+document
+    .getElementById("closeAdminMatchModalBtn")
+    .addEventListener(
+        "click",
+        () =>
+            adminMatchModal.classList.remove(
+                "active"
+            )
+    );
+
+
+function openAdminMatchManager(category){
+
+    if(
+        !currentUser ||
+        !currentUser.isAdmin
+    ){
+
+        return;
+
+    }
+
+    dropdownMenu.classList.remove(
+        "active"
+    );
+
+    currentManagingCategory =
+        category;
+
+    let catName =
+        category === "br"
+        ? "Battle Royale (BR)"
+        : (
+            category === "cs"
+            ? "Body & Heads (CS)"
+            : "Lone Wolf"
+        );
+
+    adminMatchModalTitle.textContent =
+        `Schedule & Slots / Delete ${catName} Matches`;
+
+    renderAdminMatchList();
+
+    adminMatchModal.classList.add(
+        "active"
+    );
+
+}
+
+
+function renderAdminMatchList(){
+
+    const matchesData =
+        getStoredMatches();
+
+    const list =
+        matchesData[
+            currentManagingCategory
+        ] || [];
+
+    adminMatchListContainer.innerHTML = "";
+
+    if(list.length === 0){
+
+        adminMatchListContainer.innerHTML =
+            `<div style="text-align:center;color:var(--text-muted);font-size:.8rem;padding:1rem;">
+                No matches scheduled.
+            </div>`;
+
+        return;
+
+    }
+
+    list.forEach(m => {
+
+        const item =
+            document.createElement("div");
+
+        item.style.cssText =
+            "background:var(--cardboard-bg);border:1px solid var(--cardboard-border);padding:.8rem;border-radius:6px;display:flex;flex-direction:column;gap:8px;";
+
+        item.innerHTML = `
+
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+
+                <div>
+
+                    <b style="font-size:.85rem;display:block;">
+                        ${escapeHtml(m.title)}
+                    </b>
+
+                    <span style="font-size:.72rem;color:var(--text-muted);">
+                        Entry: ₹${m.entry}
+                        |
+                        Win: ₹${m.win}
+                        |
+                        Slots: <b>${m.max}</b>
+                    </span>
+
+                </div>
+
+                <button class="admin-wallet-btn"
+                        style="background:#C0392B;color:#fff;"
+                        onclick="deleteCustomMatch('${m.id}')">
+                    Delete
+                </button>
+
+            </div>
+
+            <div style="display:flex;gap:6px;align-items:center;border-top:1px dashed var(--cardboard-border);padding-top:6px;">
+
+                <span style="font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);">
+                    Slot Management:
+                </span>
+
+                <button class="admin-wallet-btn"
+                        style="background:var(--text-main);color:#fff;"
+                        onclick="adjustMatchSlots('${m.id}',1)">
+                    + Add Seat
+                </button>
+
+                <button class="admin-wallet-btn"
+                        style="background:#EAEAEF;color:var(--text-main);"
+                        onclick="adjustMatchSlots('${m.id}',-1)">
+                    - Remove Seat
+                </button>
+
+            </div>
+
+        `;
+
+        adminMatchListContainer.appendChild(
+            item
+        );
+
+    });
+
+}
+
+
+function adjustMatchSlots(matchId,delta){
+
+    const matchesData =
+        getStoredMatches();
+
+    const match =
+        matchesData[
+            currentManagingCategory
+        ].find(
+            m =>
+                m.id === matchId
+        );
+
+    if(!match){
+
+        return;
+
+    }
+
+    const newMax =
+        match.max + delta;
+
+    if(newMax < 2){
+
+        alert(
+            "A match must have at least 2 player slots."
+        );
+
+        return;
+
+    }
+
+    if(newMax > 50){
+
+        alert(
+            "Maximum limit of 50 seats reached."
+        );
+
+        return;
+
+    }
+
+    match.max =
+        newMax;
+
+    saveStoredMatches(
+        matchesData
+    );
+
+    renderAdminMatchList();
+
+    renderAllDynamicMatches();
+
+}
+
+
+document
+    .getElementById("addNewMatchBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            const title =
+                newMatchTitleInput.value.trim();
+
+            const entry =
+                parseFloat(
+                    newMatchEntryInput.value
+                );
+
+            const win =
+                parseFloat(
+                    newMatchWinInput.value
+                );
+
+            const maxSeats =
+                parseInt(
+                    newMatchMaxSeatsInput.value
+                ) || 20;
+
+            if(
+                !title ||
+                isNaN(entry) ||
+                isNaN(win)
+            ){
+
+                alert(
+                    "Please provide a valid match title, entry fee, and prize amount."
+                );
+
+                return;
+
+            }
+
+            const matchesData =
+                getStoredMatches();
+
+            const newId =
+                currentManagingCategory
+                + "-"
+                + Date.now();
+
+            matchesData[
+                currentManagingCategory
+            ].push({
+
+                id:newId,
+                title,
+                entry,
+                win,
+                max:maxSeats
+
+            });
+
+            saveStoredMatches(
+                matchesData
+            );
+
+            newMatchTitleInput.value = "";
+
+            renderAdminMatchList();
+
+            renderAllDynamicMatches();
+
+            alert(
+                "Match scheduled successfully with configured slots!"
+            );
+
+        }
+    );
+
+
+function deleteCustomMatch(matchId){
+
+    if(
+        !confirm(
+            "Are you sure you want to delete this match?"
+        )
+    ){
+
+        return;
+
+    }
+
+    const matchesData =
+        getStoredMatches();
+
+    matchesData[
+        currentManagingCategory
+    ] =
+        matchesData[
+            currentManagingCategory
+        ].filter(
+            m =>
+                m.id !== matchId
+        );
+
+    saveStoredMatches(
+        matchesData
+    );
+
+    renderAdminMatchList();
+
+    renderAllDynamicMatches();
+
+    alert(
+        "Match deleted."
+    );
+
+}
+
+
+/* =========================================================
+   DYNAMIC MATCH RENDER
+   ========================================================= */
+
+function renderAllDynamicMatches(){
+
+    const data =
+        getStoredMatches();
+
+
+    /* BR */
+
+    const brContainer =
+        document.getElementById(
+            "brCardsContainer"
+        );
+
+    brContainer.innerHTML = "";
+
+    (data.br || []).forEach(
+        (m,idx) => {
+
+            let seatsHtml = "";
+
+            for(
+                let s=1;
+                s<=m.max;
+                s++
+            ){
+
+                seatsHtml += `
+                    <div class="seat-box"
+                         data-seat="${s}">
+                        <span>Seat</span>
+                        <b>#${s}</b>
+                    </div>
+                `;
+
+            }
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+            card.className =
+                "headshot-room-card";
+
+            card.dataset.max =
+                m.max;
+
+            card.dataset.entry =
+                m.entry;
+
+            card.dataset.slot =
+                m.title;
+
+            card.dataset.type =
+                "br-custom";
+
+            card.innerHTML = `
+
+                <div class="admin-override-banner"
+                     onclick="openAdminLobbyDirectFromCard(event,'${escapeHtml(m.title).replace(/'/g,"\\'")}')">
+                    👑 Admin Direct Enter Lobby
+                </div>
+
+                <div class="tear-overlay">
+                    <div class="tear-half left"></div>
+                    <div class="tear-half right"></div>
+                    <div class="tear-watermark">
+                        Legends are Born to Earn
+                    </div>
+                </div>
+
+                <div>
+
+                    <div class="room-top-meta">
+
+                        <span class="card-tag">
+                            Slot ${idx < 9 ? "0"+(idx+1) : idx+1} • BR
+                        </span>
+
+                        <span class="room-member-badge member-status">
+                            0 / ${m.max} Filled
+                        </span>
+
+                    </div>
+
+                    <h3>
+                        ${escapeHtml(m.title)}
+                    </h3>
+
+                    <div class="match-pricing">
+
+                        Entry:
+                        <span>₹${m.entry}</span>
+
+                        Win:
+                        <span class="win-amount">
+                            ₹${m.win}
+                        </span>
+
+                    </div>
+
+                    <p>
+                        Full map custom room.
+                    </p>
+
+                </div>
+
+                <div class="seating-section">
+
+                    <div class="seating-label">
+                        Theatre Seat Selection
+                    </div>
+
+                    <div class="seats-grid">
+                        ${seatsHtml}
+                    </div>
+
+                </div>
+
+            `;
+
+            brContainer.appendChild(
+                card
+            );
+
+        }
+    );
+
+
+    /* CS */
+
+    const hsContainer =
+        document.getElementById(
+            "headshotCardsContainer"
+        );
+
+    hsContainer.innerHTML = "";
+
+    (data.cs || []).forEach(
+        (m,idx) => {
+
+            let seatsHtml = "";
+
+            for(
+                let s=1;
+                s<=m.max;
+                s++
+            ){
+
+                seatsHtml += `
+                    <div class="seat-box"
+                         data-seat="${s}">
+                        <span>Seat</span>
+                        <b>#${s}</b>
+                    </div>
+                `;
+
+            }
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+            card.className =
+                "headshot-room-card";
+
+            card.dataset.max =
+                m.max;
+
+            card.dataset.entry =
+                m.entry;
+
+            card.dataset.slot =
+                m.title;
+
+            card.dataset.type =
+                m.type || "1v1";
+
+            card.innerHTML = `
+
+                <div class="admin-override-banner"
+                     onclick="openAdminLobbyDirectFromCard(event,'${escapeHtml(m.title).replace(/'/g,"\\'")}')">
+                    👑 Admin Direct Enter Lobby
+                </div>
+
+                <div class="tear-overlay">
+                    <div class="tear-half left"></div>
+                    <div class="tear-half right"></div>
+                    <div class="tear-watermark">
+                        Legends are Born to Earn
+                    </div>
+                </div>
+
+                <div>
+
+                    <div class="room-top-meta">
+
+                        <span class="card-tag">
+                            Slot ${idx < 9 ? "0"+(idx+1) : idx+1} • CS
+                        </span>
+
+                        <span class="room-member-badge member-status">
+                            0 / ${m.max} Filled
+                        </span>
+
+                    </div>
+
+                    <h3>
+                        ${escapeHtml(m.title)}
+                    </h3>
+
+                    <div class="match-pricing">
+
+                        Entry:
+                        <span>₹${m.entry}</span>
+
+                        Win:
+                        <span class="win-amount">
+                            ₹${m.win}
+                        </span>
+
+                    </div>
+
+                    <p>
+                        Clash squad custom room.
+                    </p>
+
+                </div>
+
+                <div class="seating-section">
+
+                    <div class="seating-label">
+                        Seat Selection
+                    </div>
+
+                    <div class="seats-grid">
+                        ${seatsHtml}
+                    </div>
+
+                </div>
+
+            `;
+
+            hsContainer.appendChild(
+                card
+            );
+
+        }
+    );
+
+
+    /* LONE WOLF */
+
+    const lwContainer =
+        document.getElementById(
+            "lonewolfCardsContainer"
+        );
+
+    lwContainer.innerHTML = "";
+
+    (data.lonewolf || []).forEach(
+        (m,idx) => {
+
+            let seatsHtml = "";
+
+            for(
+                let s=1;
+                s<=m.max;
+                s++
+            ){
+
+                seatsHtml += `
+                    <div class="seat-box"
+                         data-seat="${s}">
+                        <span>Seat</span>
+                        <b>#${s}</b>
+                    </div>
+                `;
+
+            }
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+            card.className =
+                "headshot-room-card";
+
+            card.dataset.max =
+                m.max;
+
+            card.dataset.entry =
+                m.entry;
+
+            card.dataset.slot =
+                m.title;
+
+            card.dataset.type =
+                m.type || "1v1";
+
+            card.innerHTML = `
+
+                <div class="admin-override-banner"
+                     onclick="openAdminLobbyDirectFromCard(event,'${escapeHtml(m.title).replace(/'/g,"\\'")}')">
+                    👑 Admin Direct Enter Lobby
+                </div>
+
+                <div class="tear-overlay">
+                    <div class="tear-half left"></div>
+                    <div class="tear-half right"></div>
+                    <div class="tear-watermark">
+                        Legends are Born to Earn
+                    </div>
+                </div>
+
+                <div>
+
+                    <div class="room-top-meta">
+
+                        <span class="card-tag">
+                            Format • ${escapeHtml(m.type || "1v1")}
+                        </span>
+
+                        <span class="room-member-badge member-status">
+                            0 / ${m.max} Filled
+                        </span>
+
+                    </div>
+
+                    <h3>
+                        ${escapeHtml(m.title)}
+                    </h3>
+
+                    <div class="match-pricing">
+
+                        Entry:
+                        <span>₹${m.entry}</span>
+
+                        Win:
+                        <span class="win-amount">
+                            ₹${m.win}
+                        </span>
+
+                    </div>
+
+                    <p>
+                        Lone Wolf mechanical combat.
+                    </p>
+
+                </div>
+
+                <div class="seating-section">
+
+                    <div class="seating-label">
+                        Seat Selection
+                    </div>
+
+                    <div class="seats-grid">
+                        ${seatsHtml}
+                    </div>
+
+                </div>
+
+            `;
+
+            lwContainer.appendChild(
+                card
+            );
+
+        }
+    );
+
+}
+
+
+renderAllDynamicMatches();
+
+
+/* =========================================================
+   ADMIN USERS
+   ========================================================= */
+
+document
+    .getElementById("adminUsersMenuBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            if(
+                !currentUser ||
+                !currentUser.isAdmin
+            ){
+
+                return;
+
+            }
+
+            dropdownMenu.classList.remove(
+                "active"
+            );
+
+            renderAdminUsersList("");
+
+            switchPage(
+                document.querySelector(".page.page-active"),
+                adminUsersPage
+            );
+
+        }
+    );
+
+
+document
+    .getElementById("backToOptionsFromAdminUsersBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                adminUsersPage,
+                optionsPage
+            )
+    );
+
+
+/* =========================================================
+   REQUESTS
+   ========================================================= */
+
+document
+    .getElementById("adminRequestsMenuBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            if(!currentUser){
+
+                switchPage(
+                    document.querySelector(".page.page-active"),
+                    loginPage
+                );
+
+                return;
+
+            }
+
+            dropdownMenu.classList.remove(
+                "active"
+            );
+
+            const titleEl =
+                document.getElementById(
+                    "requestsPageTitle"
+                );
+
+            const subEl =
+                document.getElementById(
+                    "requestsPageSubtitle"
+                );
+
+            if(currentUser.isAdmin){
+
+                titleEl.textContent =
+                    "Transaction Requests (Admin Dashboard)";
+
+                subEl.textContent =
+                    "Review player deposit proofs and payout withdrawal requests.";
+
+            }else{
+
+                titleEl.textContent =
+                    "My Transaction Requests";
+
+                subEl.textContent =
+                    "Track the status of your deposits and payout withdrawals.";
+
+            }
+
+            renderAdminRequestsList(
+                "deposit"
+            );
+
+            switchPage(
+                document.querySelector(".page.page-active"),
+                adminRequestsPage
+            );
+
+        }
+    );
+
+
+document
+    .getElementById("backToOptionsFromRequestsBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                adminRequestsPage,
+                optionsPage
+            )
+    );
+
+
+const adminUserSearchInput =
+    document.getElementById(
+        "adminUserSearchInput"
+    );
+
+const adminUsersListContainer =
+    document.getElementById(
+        "adminUsersListContainer"
+    );
+
+const adminRequestsListContainer =
+    document.getElementById(
+        "adminRequestsListContainer"
+    );
+
+const reqTabDepositBtn =
+    document.getElementById(
+        "reqTabDepositBtn"
+    );
+
+const reqTabWithdrawBtn =
+    document.getElementById(
+        "reqTabWithdrawBtn"
+    );
+
+let currentAdminReqTab =
+    "deposit";
+
+
+function switchAdminRequestTab(tab){
+
+    currentAdminReqTab =
+        tab;
+
+    if(tab === "deposit"){
+
+        reqTabDepositBtn.classList.add(
+            "active"
+        );
+
+        reqTabWithdrawBtn.classList.remove(
+            "active"
+        );
+
+    }else{
+
+        reqTabWithdrawBtn.classList.add(
+            "active"
+        );
+
+        reqTabDepositBtn.classList.remove(
+            "active"
+        );
+
+    }
+
+    renderAdminRequestsList(
+        tab
+    );
+
+}
+
+
+function renderAdminRequestsList(type){
+
+    const reqs =
+        getStoredRequests();
+
+    const isAdmin =
+        currentUser &&
+        currentUser.isAdmin;
+
+    const filtered =
+        reqs.filter(
+            r => {
+
+                if(r.type !== type){
+
+                    return false;
+
+                }
+
+                if(!isAdmin){
+
+                    return (
+                        r.username &&
+                        r.username.toLowerCase()
+                        ===
+                        currentUser.username.toLowerCase()
+                    );
+
+                }
+
+                return true;
+
+            }
+        );
+
+    adminRequestsListContainer.innerHTML = "";
+
+    if(filtered.length === 0){
+
+        adminRequestsListContainer.innerHTML =
+            `<div style="text-align:center;color:var(--text-muted);padding:3rem 0;">
+                No ${type} requests found.
+            </div>`;
+
+        return;
+
+    }
+
+    filtered.forEach(
+        r => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+            card.className =
+                "luxury-card";
+
+            card.style.minHeight =
+                "auto";
+
+            let statusBadgeColor =
+                r.status === "approved"
+                ? "#2D6A4F"
+                : (
+                    r.status === "rejected"
+                    ? "#C0392B"
+                    : "var(--accent)"
+                );
+
+            let statusText =
+                r.status.toUpperCase();
+
+            let actionsHtml = "";
+
+            if(
+                isAdmin &&
+                r.status === "pending"
+            ){
+
+                actionsHtml = `
+
+                    <div style="display:flex;gap:10px;margin-top:1rem;">
+
+                        <button class="cardboard-btn"
+                                style="background:#2D6A4F;color:#fff;border:none;padding:.5rem 1rem;"
+                                onclick="handleAdminRequest('${r.id}','approve')">
+                            Approve
+                        </button>
+
+                        <button class="cardboard-btn"
+                                style="background:#C0392B;color:#fff;border:none;padding:.5rem 1rem;"
+                                onclick="handleAdminRequest('${r.id}','reject')">
+                            Reject
+                        </button>
+
+                    </div>
+
+                `;
+
+            }
+
+            card.innerHTML = `
+
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:15px;">
+
+                    <div>
+
+                        <span class="card-tag">
+                            Request ID: ${escapeHtml(r.id)}
+                        </span>
+
+                        <h3 style="font-size:1.1rem;margin-top:2px;">
+                            Player:
+                            <span style="color:var(--text-main);">
+                                ${escapeHtml(r.username)}
+                            </span>
+                        </h3>
+
+                        <p style="font-size:.85rem;color:var(--text-muted);margin-top:4px;">
+                            Amount:
+                            <b style="color:var(--accent);">
+                                ₹${Number(r.amount).toLocaleString("en-IN")}
+                            </b>
+                        </p>
+
+                        <p style="font-size:.8rem;color:var(--text-muted);margin-top:2px;">
+                            Details:
+                            <b>${escapeHtml(r.details)}</b>
+                        </p>
+
+                        <p style="font-size:.72rem;color:var(--text-muted);margin-top:4px;">
+                            Time:
+                            ${escapeHtml(r.date)}
+                        </p>
+
+                    </div>
+
+                    <div style="text-align:right;">
+
+                        <span style="font-size:.75rem;font-weight:700;color:${statusBadgeColor};background:var(--cardboard-bg);padding:4px 8px;border-radius:4px;border:1px solid var(--cardboard-border);">
+                            ${statusText}
+                        </span>
+
+                    </div>
+
+                </div>
+
+                ${actionsHtml}
+
+            `;
+
+            adminRequestsListContainer.appendChild(
+                card
+            );
+
+        }
+    );
+
+}
+
+
+function handleAdminRequest(
+    reqId,
+    action
+){
+
+    if(
+        !currentUser ||
+        !currentUser.isAdmin
+    ){
+
+        return;
+
+    }
+
+    const reqs =
+        getStoredRequests();
+
+    const req =
+        reqs.find(
+            r =>
+                r.id === reqId
+        );
+
+    if(!req){
+
+        return;
+
+    }
+
+    if(action === "approve"){
+
+        req.status =
+            "approved";
+
+        if(req.type === "deposit"){
+
+            const users =
+                getStoredUsers();
+
+            const targetUser =
+                users.find(
+                    u =>
+                        u.username.toLowerCase()
+                        ===
+                        req.username.toLowerCase()
+                );
+
+            if(targetUser){
+
+                targetUser.wallet =
+                    (targetUser.wallet || 0)
+                    +
+                    req.amount;
+
+                saveStoredUsers(
+                    users
+                );
+
+            }
+
+        }
+
+        alert(
+            `Request ${req.id} approved successfully!`
+        );
+
+    }else{
+
+        req.status =
+            "rejected";
+
+        if(req.type === "withdraw"){
+
+            const users =
+                getStoredUsers();
+
+            const targetUser =
+                users.find(
+                    u =>
+                        u.username.toLowerCase()
+                        ===
+                        req.username.toLowerCase()
+                );
+
+            if(targetUser){
+
+                targetUser.wallet =
+                    (targetUser.wallet || 0)
+                    +
+                    req.amount;
+
+                saveStoredUsers(
+                    users
+                );
+
+            }
+
+        }
+
+        alert(
+            `Request ${req.id} rejected.`
+        );
+
+    }
+
+    saveStoredRequests(
+        reqs
+    );
+
+    renderAdminRequestsList(
+        currentAdminReqTab
+    );
+
+}
+
+
+adminUserSearchInput.addEventListener(
+    "input",
+    e =>
+        renderAdminUsersList(
+            e.target.value.trim()
+        )
+);
+
+
+function renderAdminUsersList(
+    filterText
+){
+
+    const users =
+        getStoredUsers();
+
+    const query =
+        filterText.toLowerCase();
+
+    const filtered =
+        users.filter(
+            u =>
+                u.username &&
+                u.username
+                .toLowerCase()
+                .includes(query)
+        );
+
+    adminUsersListContainer.innerHTML = "";
+
+    if(filtered.length === 0){
+
+        adminUsersListContainer.innerHTML =
+            `<div style="text-align:center;color:var(--text-muted);padding:3rem 0;">
+                No matching registered users found.
+            </div>`;
+
+        return;
+
+    }
+
+    filtered.forEach(
+        u => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+            card.className =
+                "luxury-card";
+
+            card.style.minHeight =
+                "auto";
+
+            card.innerHTML = `
+
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;">
+
+                    <div>
+
+                        <span class="card-tag">
+                            Registered User
+                        </span>
+
+                        <h3 style="font-size:1.1rem;margin-top:2px;">
+                            ${escapeHtml(u.username)}
+                        </h3>
+
+                        <p style="font-size:.8rem;color:var(--text-muted);margin-top:4px;">
+                            Wallet Balance:
+                            <b style="color:var(--accent);">
+                                ₹${(u.wallet || 0).toLocaleString("en-IN")}
+                            </b>
+                        </p>
+
+                    </div>
+
+                    <button class="cardboard-btn"
+                            style="width:auto;padding:.6rem 1.2rem;"
+                            onclick="adminTopUpUser('${escapeHtml(u.username).replace(/'/g,"\\'")}')">
+                        Add Money
+                    </button>
+
+                </div>
+
+            `;
+
+            adminUsersListContainer.appendChild(
+                card
+            );
+
+        }
+    );
+
+}
+
+
+function adminTopUpUser(
+    username
+){
+
+    const amtStr =
+        prompt(
+            `Enter amount to credit to user [${username}] wallet (₹):`
+        );
+
+    const amt =
+        parseFloat(
+            amtStr
+        );
+
+    if(
+        isNaN(amt) ||
+        amt <= 0
+    ){
+
+        alert(
+            "Please enter a valid amount."
+        );
+
+        return;
+
+    }
+
+    const users =
+        getStoredUsers();
+
+    const target =
+        users.find(
+            u =>
+                u.username.toLowerCase()
+                ===
+                username.toLowerCase()
+        );
+
+    if(target){
+
+        target.wallet =
+            (target.wallet || 0)
+            +
+            amt;
+
+        saveStoredUsers(
+            users
+        );
+
+        alert(
+            `Successfully added ₹${amt} to ${target.username}'s wallet!`
+        );
+
+        renderAdminUsersList(
+            adminUserSearchInput.value.trim()
+        );
+
+        if(
+            currentUser &&
+            !currentUser.isAdmin &&
+            currentUser.username.toLowerCase()
+            ===
+            username.toLowerCase()
+        ){
+
+            userWalletBalance =
+                target.wallet;
+
+            updateWalletDisplay();
+
+        }
+
+    }else{
+
+        alert(
+            "User record not found."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+function logoutUser(){
+
+    currentUser = null;
+
+    userWalletBalance = 0;
+
+    userJoinedMatches = [];
+
+    localStorage.removeItem(
+        SESSION_KEY
+    );
+
+    updateHeaderAccount();
+
+    updateWalletDisplay();
+
+    updateAdminUI();
+
+    updateGlobalChatUI();
+
+    dropdownMenu.classList.remove(
+        "active"
+    );
+
+    switchPage(
+        document.querySelector(".page.page-active"),
+        homePage
+    );
+
+}
+
+
+document
+    .getElementById("logoutMenuBtn")
+    .addEventListener(
+        "click",
+        logoutUser
+    );
+
+
+document
+    .getElementById("profileLogoutBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            closeProfile();
+
+            logoutUser();
+
+        }
+    );
+
+
+/* =========================================================
+   AUTH NAVIGATION
+   ========================================================= */
+
+document
+    .getElementById("backToHomeFromLoginBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                loginPage,
+                homePage
+            )
+    );
+
+
+document
+    .getElementById("backToHomeFromSignupBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                signupPage,
+                homePage
+            )
+    );
+
+
+document
+    .getElementById("goToSignupLink")
+    .addEventListener(
+        "click",
+        () => {
+
+            signupMsg.textContent = "";
+
+            switchPage(
+                loginPage,
+                signupPage
+            );
+
+        }
+    );
+
+
+document
+    .getElementById("goToLoginLink")
+    .addEventListener(
+        "click",
+        () => {
+
+            loginMsg.textContent = "";
+
+            switchPage(
+                signupPage,
+                loginPage
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   SIGNUP
+   ========================================================= */
+
+submitSignupBtn.addEventListener(
+    "click",
+    async () => {
+
+        const username =
+            signupUsername.value.trim();
+
+        const pass =
+            signupPassword.value;
+
+        if(!username || !pass){
+
+            signupMsg.className =
+                "auth-msg error";
+
+            signupMsg.textContent =
+                "Complete all fields.";
+
+            return;
+
+        }
+
+        if(pass.length < 6){
+
+            signupMsg.className =
+                "auth-msg error";
+
+            signupMsg.textContent =
+                "Password min 6 chars.";
+
+            return;
+
+        }
+
+        const users =
+            getStoredUsers();
+
+        if(
+            users.some(
+                u =>
+                    u.username.toLowerCase()
+                    ===
+                    username.toLowerCase()
+            )
+        ){
+
+            signupMsg.className =
+                "auth-msg error";
+
+            signupMsg.textContent =
+                "Username already taken.";
+
+            return;
+
+        }
+
+        users.push({
+
+            username,
+
+            password:
+                await hashPassword(
+                    pass
+                ),
+
+            wallet:0,
+
+            createdAt:
+                new Date().toISOString()
+
+        });
+
+        saveStoredUsers(
+            users
+        );
+
+        currentUser = {
+            username,
+            isAdmin:false
+        };
+
+        userWalletBalance = 0;
+
+        userJoinedMatches = [];
+
+        saveSession();
+
+        updateHeaderAccount();
+
+        updateWalletDisplay();
+
+        updateAdminUI();
+
+        updateGlobalChatUI();
+
+        signupMsg.className =
+            "auth-msg success";
+
+        signupMsg.textContent =
+            "Account created!";
+
+        signupUsername.value = "";
+
+        signupPassword.value = "";
+
+        setTimeout(
+            () => {
+
+                signupMsg.textContent = "";
+
+                switchPage(
+                    signupPage,
+                    optionsPage
+                );
+
+            },
+            500
+        );
+
+    }
+);
+
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+submitLoginBtn.addEventListener(
+    "click",
+    async () => {
+
+        const username =
+            loginUsername.value.trim();
+
+        const pass =
+            loginPassword.value;
+
+        if(!username || !pass){
+
+            loginMsg.className =
+                "auth-msg error";
+
+            loginMsg.textContent =
+                "Enter username & password.";
+
+            return;
+
+        }
+
+        if(
+            username.toLowerCase()
+            ===
+            ADMIN_CREDENTIALS.username
+            &&
+            pass
+            ===
+            ADMIN_CREDENTIALS.password
+        ){
+
+            currentUser = {
+                username:"admin",
+                isAdmin:true
+            };
+
+            saveSession();
+
+            updateHeaderAccount();
+
+            updateAdminUI();
+
+            updateGlobalChatUI();
+
+            loginUsername.value = "";
+
+            loginPassword.value = "";
+
+            switchPage(
+                loginPage,
+                optionsPage
+            );
+
+            return;
+
+        }
+
+        const user =
+            getStoredUsers().find(
+                u =>
+                    u.username &&
+                    u.username.toLowerCase()
+                    ===
+                    username.toLowerCase()
+            );
+
+        if(
+            !user ||
+            await hashPassword(pass)
+            !==
+            user.password
+        ){
+
+            loginMsg.className =
+                "auth-msg error";
+
+            loginMsg.textContent =
+                "Invalid username or password.";
+
+            return;
+
+        }
+
+        currentUser = {
+            username:user.username,
+            isAdmin:false
+        };
+
+        userWalletBalance =
+            user.wallet || 0;
+
+        userJoinedMatches = [];
+
+        saveSession();
+
+        updateHeaderAccount();
+
+        updateWalletDisplay();
+
+        updateAdminUI();
+
+        updateGlobalChatUI();
+
+        loginUsername.value = "";
+
+        loginPassword.value = "";
+
+        loginMsg.textContent = "";
+
+        switchPage(
+            loginPage,
+            optionsPage
+        );
+
+    }
+);
+
+
+/* =========================================================
+   MAIN NAVIGATION
+   ========================================================= */
+
+document
+    .getElementById("startBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                homePage,
+                currentUser
+                ? optionsPage
+                : loginPage
+            )
+    );
+
+
+document
+    .getElementById("backToHomeBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                optionsPage,
+                homePage
+            )
+    );
+
+
+document
+    .getElementById("goToBrMapsBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                optionsPage,
+                brMapsPage
+            )
+    );
+
+
+document
+    .getElementById("backToOptionsBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                brMapsPage,
+                optionsPage
+            )
+    );
+
+
+document
+    .getElementById("goToCsModesBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                optionsPage,
+                csModesPage
+            )
+    );
+
+
+document
+    .getElementById("backToOptionsFromCsBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                csModesPage,
+                optionsPage
+            )
+    );
+
+
+document
+    .getElementById("goToLoneWolfModesBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                optionsPage,
+                lonewolfModesPage
+            )
+    );
+
+
+document
+    .getElementById("backToOptionsFromLoneWolfBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                lonewolfModesPage,
+                optionsPage
+            )
+    );
+
+
+document
+    .getElementById("goToHeadShotTimesBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                csModesPage,
+                headshotTimesPage
+            )
+    );
+
+
+document
+    .getElementById("backToCsModesBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                headshotTimesPage,
+                csModesPage
+            )
+    );
+
+
+document
+    .getElementById("backToOptionsFromMatchesBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                myMatchesPage,
+                optionsPage
+            )
+    );
+
+
+/* =========================================================
+   SEAT RESERVATION
+   ========================================================= */
+
+const notificationModal =
+    document.getElementById(
+        "notificationModal"
+    );
+
+const modalCancelBtn =
+    document.getElementById(
+        "modalCancelBtn"
+    );
+
+const modalConfirmBtn =
+    document.getElementById(
+        "modalConfirmBtn"
+    );
+
+const modalSeatTitle =
+    document.getElementById(
+        "modalSeatTitle"
+    );
+
+const modalSeatSubtitle =
+    document.getElementById(
+        "modalSeatSubtitle"
+    );
+
+const modalInputLabel =
+    document.getElementById(
+        "modalInputLabel"
+    );
+
+const seatPlayerInput =
+    document.getElementById(
+        "seatPlayerInput"
+    );
+
+let activeSeatElement = null;
+let activeCard = null;
+
+
+[
+    document.getElementById(
+        "brCardsContainer"
+    ),
+
+    document.getElementById(
+        "headshotCardsContainer"
+    ),
+
+    document.getElementById(
+        "lonewolfCardsContainer"
+    )
+
+].forEach(
+    container => {
+
+        if(!container){
+
+            return;
+
+        }
+
+        container.addEventListener(
+            "click",
+            e => {
+
+                const seatBox =
+                    e.target.closest(
+                        ".seat-box"
+                    );
+
+                if(!seatBox){
+
+                    return;
+
+                }
+
+                activeCard =
+                    seatBox.closest(
+                        ".headshot-room-card"
+                    );
+
+                if(
+                    seatBox.classList.contains(
+                        "filled"
+                    )
+                ){
+
+                    triggerLobbyTransition(
+                        activeCard
+                    );
+
+                    return;
+
+                }
+
+                if(!currentUser){
+
+                    alert(
+                        "Please login before joining a room."
+                    );
+
+                    switchPage(
+                        document.querySelector(".page.page-active"),
+                        loginPage
+                    );
+
+                    return;
+
+                }
+
+                activeSeatElement =
+                    seatBox;
+
+                modalSeatTitle.textContent =
+                    `Seat #${seatBox.dataset.seat} Reservation`;
+
+                modalSeatSubtitle.textContent =
+                    `Enter username for Seat ${seatBox.dataset.seat}`;
+
+                modalInputLabel.textContent =
+                    "Username";
+
+                seatPlayerInput.value =
+                    currentUser.isAdmin
+                    ? "AdminPlayer"
+                    : currentUser.username;
+
+                notificationModal.classList.add(
+                    "active"
+                );
+
+            }
+        );
+
+    }
+);
+
+
+modalCancelBtn.addEventListener(
+    "click",
+    () => {
+
+        notificationModal.classList.remove(
+            "active"
+        );
+
+        activeSeatElement = null;
+
+        activeCard = null;
+
+    }
+);
+
+
+modalConfirmBtn.addEventListener(
+    "click",
+    () => {
+
+        if(
+            !activeSeatElement ||
+            !activeCard
+        ){
+
+            return;
+
+        }
+
+        const playerName =
+            seatPlayerInput.value.trim();
+
+        if(!playerName){
+
+            alert(
+                "Enter a valid username."
+            );
+
+            return;
+
+        }
+
+        const entryFee =
+            parseInt(
+                activeCard.dataset.entry
+            );
+
+        if(
+            !currentUser.isAdmin &&
+            userWalletBalance < entryFee
+        ){
+
+            alert(
+                "Insufficient wallet balance!"
+            );
+
+            notificationModal.classList.remove(
+                "active"
+            );
+
+            return;
+
+        }
+
+        if(!currentUser.isAdmin){
+
+            userWalletBalance -=
+                entryFee;
+
+            updateWalletDisplay();
+
+            saveWallet();
+
+        }
+
+        activeSeatElement.classList.add(
+            "filled"
+        );
+
+        activeSeatElement.innerHTML = `
+
+            <span>
+                P${activeSeatElement.dataset.seat}
+            </span>
+
+            <b>
+                ${escapeHtml(playerName)}
+            </b>
+
+        `;
+
+        activeSeatElement.dataset.player =
+            playerName;
+
+        const max =
+            parseInt(
+                activeCard.dataset.max
+            );
+
+        const filled =
+            activeCard.querySelectorAll(
+                ".seat-box.filled"
+            ).length;
+
+        activeCard
+            .querySelector(
+                ".member-status"
+            )
+            .textContent =
+            `${filled} / ${max} Filled`;
+
+        const slotName =
+            activeCard.dataset.slot;
+
+        const sourcePage =
+            activeCard.closest(
+                "#brCardsContainer"
+            )
+            ? brMapsPage
+            :
+            (
+                activeCard.closest(
+                    "#lonewolfCardsContainer"
+                )
+                ? lonewolfModesPage
+                : headshotTimesPage
+            );
+
+        if(
+            !userJoinedMatches.some(
+                m =>
+                    m.slotName
+                    ===
+                    slotName
+            )
+        ){
+
+            userJoinedMatches.push({
+
+                slotName,
+
+                card:activeCard,
+
+                sourcePage,
+
+                seatNo:
+                    activeSeatElement.dataset.seat,
+
+                playerName
+
+            });
+
+        }
+
+        notificationModal.classList.remove(
+            "active"
+        );
+
+        triggerLobbyTransition(
+            activeCard
+        );
+
+        activeSeatElement = null;
+
+        activeCard = null;
+
+    }
+);
+
+
+/* =========================================================
+   LOBBY
+   ========================================================= */
+
+const lobbyRoomTitle =
+    document.getElementById(
+        "lobbyRoomTitle"
+    );
+
+const lobbyRosterContainer =
+    document.getElementById(
+        "lobbyRosterContainer"
+    );
+
+const credsDisplayStatus =
+    document.getElementById(
+        "credsDisplayStatus"
+    );
+
+
+document
+    .getElementById("backToTimesBtn")
+    .addEventListener(
+        "click",
+        () =>
+            switchPage(
+                roomLobbyPage,
+                lastActiveSourcePage
+            )
+    );
+
+
+function playPaperTearSound(){
+
+    try{
+
+        const ctx =
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
+
+        const buffer =
+            ctx.createBuffer(
+                1,
+                ctx.sampleRate * .4,
+                ctx.sampleRate
+            );
+
+        const data =
+            buffer.getChannelData(0);
+
+        for(
+            let i=0;
+            i<buffer.length;
+            i++
+        ){
+
+            data[i] =
+                (Math.random()*2-1)
+                *
+                Math.exp(
+                    -i /
+                    (ctx.sampleRate*.15)
+                );
+
+        }
+
+        const src =
+            ctx.createBufferSource();
+
+        src.buffer =
+            buffer;
+
+        const filter =
+            ctx.createBiquadFilter();
+
+        filter.type =
+            "bandpass";
+
+        filter.frequency.value =
+            1800;
+
+        filter.Q.value =
+            3;
+
+        const gain =
+            ctx.createGain();
+
+        gain.gain.setValueAtTime(
+            .6,
+            ctx.currentTime
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            .01,
+            ctx.currentTime+.4
+        );
+
+        src.connect(filter);
+
+        filter.connect(gain);
+
+        gain.connect(ctx.destination);
+
+        src.start();
+
+    }catch(e){}
+
+}
+
+
+function triggerLobbyTransition(
+    card,
+    customSourcePage=null
+){
+
+    playPaperTearSound();
+
+    const tearOverlay =
+        card.querySelector(
+            ".tear-overlay"
+        );
+
+    if(
+        tearOverlay &&
+        card.classList
+    ){
+
+        tearOverlay.classList.add(
+            "active"
+        );
+
+        card.classList.add(
+            "tearing"
+        );
+
+    }
+
+    currentActiveCard =
+        card;
+
+    const slotName =
+        card.dataset.slot;
+
+    lobbyRoomTitle.textContent =
+        slotName + " Lobby";
+
+    credsDisplayStatus.textContent =
+        slotName.includes("BR")
+        ? "ID pass will appear before 1 min in chat box 📦"
+        : "NOMO-ROOM-77: Pass #4455";
+
+    renderLobbyRoster(
+        card
+    );
+
+    lastActiveSourcePage =
+        customSourcePage
+        ||
+        (
+            card.closest(
+                "#brCardsContainer"
+            )
+            ? brMapsPage
+            :
+            (
+                card.closest(
+                    "#lonewolfCardsContainer"
+                )
+                ? lonewolfModesPage
+                : headshotTimesPage
+            )
+        );
+
+    setTimeout(
+        () => {
+
+            switchPage(
+                document.querySelector(".page.page-active"),
+                roomLobbyPage
+            );
+
+            if(card.classList){
+
+                card.classList.remove(
+                    "tearing"
+                );
+
+                if(tearOverlay){
+
+                    tearOverlay.classList.remove(
+                        "active"
+                    );
+
+                }
+
+            }
+
+        },
+        600
+    );
+
+}
+
+
+function renderLobbyRoster(
+    card
+){
+
+    lobbyRosterContainer.innerHTML = "";
+
+    card
+        .querySelectorAll(
+            ".seat-box"
+        )
+        .forEach(
+            seat => {
+
+                const box =
+                    document.createElement(
+                        "div"
+                    );
+
+                box.className =
+                    "white-cardboard-box";
+
+                const playerName =
+                    seat.dataset.player
+                    ||
+                    "Open Slot";
+
+                let adminActionHtml = "";
+
+                if(
+                    currentUser &&
+                    currentUser.isAdmin &&
+                    seat.dataset.player
+                ){
+
+                    adminActionHtml = `
+
+                        <button class="admin-wallet-btn"
+                                onclick="adminAddMoneyToPlayer(event,'${escapeHtml(seat.dataset.player).replace(/'/g,"\\'")}')">
+                            Add Wallet ₹
+                        </button>
+
+                    `;
+
+                }
+
+                box.innerHTML = `
+
+                    <div>
+
+                        <span>
+                            Player ${seat.dataset.seat}
+                        </span>
+
+                        <b>
+                            ${escapeHtml(playerName)}
+                        </b>
+
+                    </div>
+
+                    ${adminActionHtml}
+
+                `;
+
+                lobbyRosterContainer.appendChild(
+                    box
+                );
+
+            }
+        );
+
+}
+
+
+function toggleRosterView(){
+
+    if(currentActiveCard){
+
+        renderLobbyRoster(
+            currentActiveCard
+        );
+
+    }
+
+}
+
+
+function adminAddMoneyToPlayer(
+    e,
+    playerName
+){
+
+    e.stopPropagation();
+
+    adminTopUpUser(
+        playerName
+    );
+
+}
+
+
+function renderMyMatches(){
+
+    const container =
+        document.getElementById(
+            "myMatchesContainer"
+        );
+
+    if(
+        userJoinedMatches.length === 0
+    ){
+
+        container.innerHTML =
+            `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:3rem 0;">
+                You have not joined any rooms yet.
+                Select a room and secure your seat!
+            </div>`;
+
+        return;
+
+    }
+
+    container.innerHTML = "";
+
+    userJoinedMatches.forEach(
+        match => {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+            item.className =
+                "luxury-card";
+
+            item.innerHTML = `
+
+                <div>
+
+                    <span class="card-tag">
+                        Confirmed Reservation
+                    </span>
+
+                    <h3>
+                        ${escapeHtml(match.slotName)}
+                    </h3>
+
+                    <div class="match-pricing">
+
+                        Your Seat:
+                        <span>
+                            #${match.seatNo}
+                        </span>
+
+                        Username:
+                        <span class="win-amount">
+                            ${escapeHtml(match.playerName)}
+                        </span>
+
+                    </div>
+
+                    <p>
+                        Room roster secured and active in tournament queue.
+                    </p>
+
+                </div>
+
+                <button class="cardboard-btn"
+                        style="margin-top:1rem;">
+                    View Lobby
+                </button>
+
+            `;
+
+            item
+                .querySelector("button")
+                .addEventListener(
+                    "click",
+                    () =>
+                        triggerLobbyTransition(
+                            match.card,
+                            myMatchesPage
+                        )
+                );
+
+            container.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   ADMIN LOBBY
+   ========================================================= */
+
+function openAdminLobbyDirect(
+    lobbyName
+){
+
+    if(
+        !currentUser ||
+        !currentUser.isAdmin
+    ){
+
+        alert(
+            "Admin login required."
+        );
+
+        switchPage(
+            csModesPage,
+            loginPage
+        );
+
+        return;
+
+    }
+
+    lobbyRoomTitle.textContent =
+        lobbyName +
+        " (Admin Override Lobby)";
+
+    credsDisplayStatus.textContent =
+        "NOMO-CS-ROOM: Pass #8899";
+
+    lobbyRosterContainer.innerHTML = `
+
+        <div class="white-cardboard-box">
+
+            <span>Admin</span>
+
+            <b>👑 ADMIN</b>
+
+        </div>
+
+        <div class="white-cardboard-box">
+
+            <span>Status</span>
+
+            <b>Full Control</b>
+
+        </div>
+
+    `;
+
+    lastActiveSourcePage =
+        csModesPage;
+
+    switchPage(
+        csModesPage,
+        roomLobbyPage
+    );
+
+}
+
+
+function openAdminLobbyDirectFromCard(
+    e,
+    lobbyName
+){
+
+    e.stopPropagation();
+
+    if(
+        !currentUser ||
+        !currentUser.isAdmin
+    ){
+
+        alert(
+            "Admin login required."
+        );
+
+        return;
+
+    }
+
+    lobbyRoomTitle.textContent =
+        lobbyName +
+        " (Admin Override Lobby)";
+
+    credsDisplayStatus.textContent =
+        lobbyName.includes("BR")
+        ? "ID pass will appear before 1 min in chat box 📦"
+        : "NOMO-ROOM-99: Pass #1122";
+
+    lobbyRosterContainer.innerHTML = `
+
+        <div class="white-cardboard-box">
+
+            <span>Admin</span>
+
+            <b>👑 ADMIN</b>
+
+        </div>
+
+        <div class="white-cardboard-box">
+
+            <span>Status</span>
+
+            <b>Full Control</b>
+
+        </div>
+
+    `;
+
+    const card =
+        e.target.closest(
+            ".headshot-room-card"
+        );
+
+    lastActiveSourcePage =
+        card?.closest(
+            "#brCardsContainer"
+        )
+        ? brMapsPage
+        :
+        (
+            card?.closest(
+                "#lonewolfCardsContainer"
+            )
+            ? lonewolfModesPage
+            : headshotTimesPage
+        );
+
+    switchPage(
+        lastActiveSourcePage,
+        roomLobbyPage
+    );
+
+}
+
+
+/* =========================================================
+   OLD ADMIN BROADCAST
+   ========================================================= */
+
+const chatInput =
+    document.getElementById(
+        "chatInput"
+    );
+
+const sendChatBtn =
+    document.getElementById(
+        "sendChatBtn"
+    );
+
+const chatMessagesArea =
+    document.getElementById(
+        "chatMessagesArea"
+    );
+
+const adminIndicatorBadge =
+    document.getElementById(
+        "adminIndicatorBadge"
+    );
+
+const chatRestrictedNotice =
+    document.getElementById(
+        "chatRestrictedNotice"
+    );
+
+
+function updateChatPermissions(){
+
+    const isAdmin =
+        currentUser &&
+        currentUser.isAdmin;
+
+    chatInput.disabled =
+        !isAdmin;
+
+    sendChatBtn.disabled =
+        !isAdmin;
+
+    chatInput.placeholder =
+        isAdmin
+        ? "Type broadcast message as admin..."
+        : "Only administrators can send messages...";
+
+    adminIndicatorBadge.textContent =
+        isAdmin
+        ? "👑 ADMIN MODE ACTIVE"
+        : "Admin Only";
+
+    chatRestrictedNotice.textContent =
+        isAdmin
+        ? "Admin controls active."
+        : "Chat broadcasting is restricted to official tournament admins.";
+
+}
+
+
+sendChatBtn.addEventListener(
+    "click",
+    () => {
+
+        const text =
+            chatInput.value.trim();
+
+        if(
+            !text ||
+            !currentUser ||
+            !currentUser.isAdmin
+        ){
+
+            return;
+
+        }
+
+        const msgDiv =
+            document.createElement(
+                "div"
+            );
+
+        msgDiv.className =
+            "chat-msg user-sent";
+
+        msgDiv.innerHTML = `
+
+            <div class="chat-msg-sender">
+                👑 NOMO Arena Admin
+            </div>
+
+            ${escapeHtml(text)}
+
+        `;
+
+        chatMessagesArea.appendChild(
+            msgDiv
+        );
+
+        chatMessagesArea.scrollTop =
+            chatMessagesArea.scrollHeight;
+
+        chatInput.value = "";
+
+    }
+);
+
+
+chatInput.addEventListener(
+    "keypress",
+    e => {
+
+        if(e.key === "Enter"){
+
+            sendChatBtn.click();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   GLOBAL LIVE CHAT
+   ========================================================= */
+
+const supportChatWindow =
+    document.getElementById(
+        "supportChatWindow"
+    );
+
+const supportChatMessages =
+    document.getElementById(
+        "supportChatMessages"
+    );
+
+const supportChatInput =
+    document.getElementById(
+        "supportChatInput"
+    );
+
+const supportSendBtn =
+    document.getElementById(
+        "supportSendBtn"
+    );
+
+const chatLoginNote =
+    document.getElementById(
+        "chatLoginNote"
+    );
+
+let globalChatInitialized = false;
+
+
+/* Open / close */
+
+function toggleSupportChat(){
+
+    supportChatWindow.classList.toggle(
+        "active"
+    );
+
+}
+
+
+/* Update controls */
+
+function updateGlobalChatUI(){
+
+    if(!currentUser){
+
+        supportChatInput.disabled =
+            true;
+
+        supportSendBtn.disabled =
+            true;
+
+        supportChatInput.placeholder =
+            "Login to send messages...";
+
+        chatLoginNote.textContent =
+            "Login to send messages. Everyone can see the global chat.";
+
+        return;
+
+    }
+
+    supportChatInput.disabled =
+        false;
+
+    supportSendBtn.disabled =
+        false;
+
+    supportChatInput.placeholder =
+        "Type a message...";
+
+    chatLoginNote.textContent =
+        currentUser.isAdmin
+        ? "👑 You are chatting as NOMO Admin. Everyone can see this message."
+        : "🌐 Global chat — everyone online can see your message.";
+
+}
+
+
+/* Format time */
+
+function formatChatTime(timestamp){
+
+    if(!timestamp){
+
+        return "";
+
+    }
+
+    try{
+
+        return new Date(
+            timestamp
+        ).toLocaleTimeString(
+            [],
+            {
+                hour:"2-digit",
+                minute:"2-digit"
+            }
+        );
+
+    }catch(e){
+
+        return "";
+
+    }
+
+}
+
+
+/* Create global message */
+
+function appendGlobalChatMessage(
+    message,
+    key
+){
+
+    if(
+        document.querySelector(
+            `[data-chat-id="${CSS.escape(key)}"]`
+        )
+    ){
+
+        return;
+
+    }
+
+    const username =
+        message.username
+        ||
+        "NOMO Player";
+
+    const text =
+        message.text
+        ||
+        "";
+
+    const isAdmin =
+        message.sender
+        ===
+        "admin";
+
+    const isMe =
+        currentUser &&
+        message.uid &&
+        firebaseUser &&
+        message.uid
+        ===
+        firebaseUser.uid;
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.dataset.chatId =
+        key;
+
+    if(isAdmin){
+
+        div.className =
+            "support-msg admin";
+
+    }else if(isMe){
+
+        div.className =
+            "support-msg customer";
+
+    }else{
+
+        div.className =
+            "support-msg agent";
+
+    }
+
+    const safeUsername =
+        escapeHtml(
+            username
+        );
+
+    const safeText =
+        escapeHtml(
+            text
+        );
+
+    const safeTime =
+        escapeHtml(
+            formatChatTime(
+                message.timestamp
+            )
+        );
+
+    div.innerHTML = `
+
+        <b>
+            ${isAdmin ? "👑 " : ""}
+            ${safeUsername}
+        </b>
+
+        <div>
+            ${safeText}
+        </div>
+
+        <span class="message-time">
+            ${safeTime}
+        </span>
+
+    `;
+
+    supportChatMessages.appendChild(
+        div
+    );
+
+    supportChatMessages.scrollTop =
+        supportChatMessages.scrollHeight;
+
+}
+
+
+/* Initialize listener */
+
+function initGlobalChat(){
+
+    if(
+        !firebaseReady ||
+        !db ||
+        globalChatInitialized
+    ){
+
+        return;
+
+    }
+
+    globalChatInitialized =
+        true;
+
+    supportChatMessages.innerHTML = "";
+
+    const chatRef =
+        db
+        .ref("globalChat")
+        .limitToLast(100);
+
+    chatRef.on(
+        "child_added",
+        snapshot => {
+
+            const message =
+                snapshot.val();
+
+            appendGlobalChatMessage(
+                message,
+                snapshot.key
+            );
+
+        },
+        error => {
+
+            console.error(
+                "Global chat read error:",
+                error
+            );
+
+            setFirebaseStatus(
+                "● Chat Read Error",
+                "offline"
+            );
+
+        }
+    );
+
+}
+
+
+/* Send global message */
+
+async function sendSupportMessage(){
+
+    const text =
+        supportChatInput.value.trim();
+
+    if(!text){
+
+        return;
+
+    }
+
+    if(!currentUser){
+
+        alert(
+            "Please login to use global chat."
+        );
+
+        return;
+
+    }
+
+    if(
+        !firebaseReady ||
+        !db ||
+        !firebaseUser
+    ){
+
+        alert(
+            "Live chat is not connected yet. Please try again."
+        );
+
+        return;
+
+    }
+
+    if(text.length > 300){
+
+        alert(
+            "Message is too long. Maximum 300 characters."
+        );
+
+        return;
+
+    }
+
+    supportSendBtn.disabled =
+        true;
+
+    try{
+
+        await db
+            .ref("globalChat")
+            .push({
+
+                uid:
+                    firebaseUser.uid,
+
+                username:
+                    currentUser.isAdmin
+                    ? "NOMO Admin"
+                    : currentUser.username,
+
+                sender:
+                    currentUser.isAdmin
+                    ? "admin"
+                    : "user",
+
+                text:text,
+
+                timestamp:
+                    firebase.database.ServerValue.TIMESTAMP
+
+            });
+
+        supportChatInput.value = "";
+
+    }catch(error){
+
+        console.error(
+            "Chat send error:",
+            error
+        );
+
+        alert(
+            "Unable to send message. Check Firebase configuration."
+        );
+
+    }finally{
+
+        updateGlobalChatUI();
+
+    }
+
+}
+
+
+/* Enter key */
+
+supportChatInput.addEventListener(
+    "keypress",
+    e => {
+
+        if(e.key === "Enter"){
+
+            e.preventDefault();
+
+            sendSupportMessage();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   FIREBASE CONNECTION STATUS
+   ========================================================= */
+
+if(firebaseReady){
+
+    db.ref(".info/connected")
+        .on(
+            "value",
+            snapshot => {
+
+                if(snapshot.val() === true){
+
+                    setFirebaseStatus(
+                        "● LIVE CHAT ONLINE",
+                        "online"
+                    );
+
+                }else{
+
+                    setFirebaseStatus(
+                        "● Chat Offline",
+                        "offline"
+                    );
+
+                }
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   SESSION START
+   ========================================================= */
+
+if(loadSession()){
+
+    updateHeaderAccount();
+
+    updateWalletDisplay();
+
+    updateAdminUI();
+
+    updateChatPermissions();
+
+    updateGlobalChatUI();
+
+}else{
+
+    currentUser = null;
+
+    userWalletBalance = 0;
+
+    updateHeaderAccount();
+
+    updateWalletDisplay();
+
+    updateAdminUI();
+
+    updateChatPermissions();
+
+    updateGlobalChatUI();
+
+}
+
+</script>
+
+</body>
+</html>
